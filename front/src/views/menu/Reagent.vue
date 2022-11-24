@@ -69,7 +69,7 @@
                           <!--試劑組別 {{ reag_catalog.selected_item }}-->
 
                           <div v-if="reag_catalog.selected_item!=='其他'">
-                            <v-select class="company-size-dropdown"
+                            <v-select
                               :items="reagents"
                               attach
                               v-model="reag_catalog.selected_item"
@@ -89,28 +89,49 @@
                             </v-text-field>
                           </div>
                         </v-col>
-
                       </v-row>
 
                       <!-- 第2列-->
                       <v-row>
                         <v-col cols="12" md="2">
-                          <v-select
-                            :items="['盒', '包', '袋', '瓶', '個', '條']"
-                            label="入庫單位"
+                          <div v-if="editedItem.reag_In_unit!=='其他'">
+                            <v-select
+                              :items="InUnits"
+                              label="入庫單位"
 
-                            v-model="editedItem.reag_In_unit"
-                            @focus="fieldFocus"
-                          ></v-select>
+                              v-model="editedItem.reag_In_unit"
+                              @focus="fieldFocus"
+                            ></v-select>
+                          </div>
+                          <div v-else>
+                            <v-text-field
+                              autofocus
+                              label="入庫單位"
+
+                              v-model="newItemIn"
+                              v-on:keyup.enter="resetQueueIn">
+
+                            </v-text-field>
+                          </div>
                         </v-col>
                         <v-col cols="12" md="2">
-                          <v-select
-                            :items="['盒', '包', '袋', '瓶', '個', '條']"
-                            label="出庫單位"
+                          <div v-if="editedItem.reag_Out_unit!=='其他'">
+                            <v-select
+                              :items="OutUnits"
+                              label="出庫單位"
 
-                            v-model="editedItem.reag_Out_unit"
-                            @focus="fieldFocus"
-                          ></v-select>
+                              v-model="editedItem.reag_Out_unit"
+                              @focus="fieldFocus"
+                            ></v-select>
+                          </div>
+                          <div v-else>
+                            <v-text-field
+                              autofocus
+                              label="出庫單位"
+                              v-model="newItemOut"
+                              v-on:keyup.enter="resetQueueOut">
+                            </v-text-field>
+                          </div>
                         </v-col>
                         <v-col cols="12" md="3">
                           <v-text-field
@@ -369,6 +390,10 @@ export default {
     reag_catalog: {
       selected_item: '',
     },
+    newItemIn: '',
+    newItemOut: '',
+    InUnits: ['盒', '包', '袋', '瓶', '個', '條', '其他'],
+    OutUnits: ['盒', '包', '袋', '瓶', '個', '條', '其他'],
     newItem: '',
     reagents: [],
 
@@ -742,9 +767,23 @@ export default {
 
     resetQueue() {
       this.reag_catalog.selected_item = this.newItem;
-      let temp=this.reag_catalog.length;
-      this.reagents.splice(temp-2, 0, this.newItem);
-      //this.reagents.join()
+      //let temp=this.reag_catalog.length;
+      //this.reagents.splice(temp-2, 0, this.newItem);
+      this.reagents.unshift(this.reag_catalog.selected_item);
+    },
+
+    resetQueueIn() {
+      this.editedItem.reag_In_unit = this.newItemIn;
+      //let temp=this.newItemIn.length;
+      //this.InUnits.splice(temp-2, 0, this.newItem);
+      this.InUnits.unshift(this.editedItem.reag_In_unit);
+    },
+
+    resetQueueOut() {
+      this.editedItem.reag_Out_unit = this.newItemOut;
+      //let temp=this.newItemIn.length;
+      //this.InUnits.splice(temp-2, 0, this.newItem);
+      this.OutUnits.unshift(this.editedItem.reag_Out_unit);
     },
 
     setRowStyleForRragent(item) {
