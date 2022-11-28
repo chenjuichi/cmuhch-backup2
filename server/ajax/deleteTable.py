@@ -31,7 +31,36 @@ def remove_user():
     })
 
 
+@deleteTable.route("/removeStockIn", methods=['POST'])
+def remove_stockIn():
+    print("removeStockIn....")
+    request_data = request.get_json()
+    inTag_id = (request_data['id'] or '')
+
+    print("data: ", inTag_id)
+
+    return_message = ''
+    return_value = True  # true: 資料正確, 註冊成功
+    if inTag_id == "":
+        return_value = False  # false: 資料不完全 註冊失敗
+        return_message = '資料錯誤!'
+
+    if return_value:
+        s = Session()
+        s.query(InTag).filter(InTag.id == inTag_id).update(
+            {'isRemoved': False})
+
+        s.commit()
+        s.close()
+
+    return jsonify({
+        'status': return_value,
+        'message': return_message,
+    })
+
 # update reagent's 'isRemoved'
+
+
 @deleteTable.route("/removeReagent", methods=['POST'])
 def remove_reagent():
     print("removeReagent....")
@@ -113,7 +142,7 @@ def remove_department():
     if return_value:
         s = Session()
         s.query(Department).filter(Department.id ==
-                                departmentID).update({'isRemoved': False})
+                                   departmentID).update({'isRemoved': False})
         s.commit()
         s.close()
 

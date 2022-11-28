@@ -357,7 +357,7 @@ class InTag(BASE):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('user.id'))        # 一對多中的 "多"
     reagent_id = Column(Integer, ForeignKey('reagent.id'))  # 一對多中的 "多"
-    grid_id = Column(Integer, ForeignKey('grid.id'))        # 一對多中的 "多"
+    grid_id = Column(Integer, ForeignKey('grid.id'))  # 一對多中的 "多" , 11/26建議刪除
     count = Column(Integer, default=1)                # 入(在)庫數量
     stockOut_temp_count = Column(Integer, default=0)  # 暫時領料數 for stockOut計數
     batch = Column(String(20))                        # 批號
@@ -373,7 +373,7 @@ class InTag(BASE):
 
     count_inv_modify = Column(Integer, default=0)  # 盤點數
 
-    comment = Column(String(80))  # 盤點說明
+    comment = Column(String(80))  # 盤點說明  ,  , 11/26建議 default=''
 
     updated_at = Column(DateTime, onupdate=datetime.utcnow())  # 資料修改的時間
 

@@ -114,6 +114,57 @@ def createUser():
     })
 
 
+# create InTag data into table
+@createTable.route("/createStockIn", methods=['POST'])
+def createStockIn():
+    print("createStockIn....")
+    request_data = request.get_json()
+
+    employer = (request_data['stockInTag_Employer'] or '')
+    reagID = (request_data['stockInTag_reagID'] or '')
+    date = (request_data['stockInTag_Date'] or '')
+    cnt = (request_data['stockInTag_cnt'] or '')
+    batch = (request_data['stockInTag_batch'] or '')
+
+    #print("data: ", employer, reagID, date, cnt, batch)
+
+    return_value = True  # true: 資料正確, true
+    if reagID == "" or employer == "" or date == "" or cnt == "" or batch == "":
+        return_value = False  # false: 資料不完全
+
+    #print("step1: ", return_value)
+
+    s = Session()
+    _user = s.query(User).filter_by(emp_name=employer).first()
+    if not _user:
+        return_value = False  # if the user data does not exist
+
+    #print("step2: ", return_value)
+
+    _reagent = s.query(Reagent).filter_by(reag_id=reagID).first()
+    if not _reagent:
+        return_value = False  # if the reagent data  does not exist
+
+    #print("step3: ", return_value)
+
+    if return_value:
+        new_stockIn = InTag(user_id=_user.id,
+                            reagent_id=_reagent.id,
+                            grid_id=_reagent.grid_id,
+                            batch=batch,
+                            count=cnt,
+                            intag_date=date,
+                            stockIn_alpha='A',
+                            comment='')
+        s.add(new_stockIn)
+        s.commit()
+
+    s.close()
+    return jsonify({
+        'status': return_value,
+    })
+
+
 # create reagent data table
 @createTable.route("/createReagent", methods=['POST'])
 def create_reagent():

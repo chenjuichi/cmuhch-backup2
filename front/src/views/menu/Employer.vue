@@ -39,7 +39,6 @@
                             @focus="fieldFocus"
                           ></v-text-field>
                           <small class="msgErr" v-text= "IDErrMsg"></small>
-
                         </v-col>
 
                         <v-col cols="12" md="4">
@@ -58,12 +57,6 @@
                             v-model="editedItem.emp_dep"
                             @focus="fieldFocus"
                           ></v-select>
-                          <!--
-                          <v-text-field
-                            v-model="editedItem.emp_dep"
-                            label="組別"
-                          ></v-text-field>
-                          -->
                         </v-col>
                       </v-row>
                     </v-container>
@@ -73,7 +66,6 @@
                     <v-spacer></v-spacer>
                     <v-btn color="blue darken-1" text @click="close">取消</v-btn>
                     <v-btn color="blue darken-1" text @click="save" :disabled='checkDataForSaveButton'>確定</v-btn>
-
                     <v-tooltip v-model="tosterOK" bottom :position-x="toster_pos_x" :position-y="toster_pos_y" color="error">
                       <span>員工編號重複!</span>
                     </v-tooltip>
@@ -93,6 +85,7 @@
               </v-dialog>
             </v-toolbar>
           </template>
+
           <template v-slot:[`item.actions`]="{ item }">
             <v-icon small class="mr-2" @click="editItem(item)" style="color: blue;">
               mdi-pencil
@@ -101,11 +94,6 @@
               mdi-delete
             </v-icon>
           </template>
-          <!--
-          <template v-slot:no-data>
-            <v-btn color="primary" @click="initialize">Reset</v-btn>
-          </template>
-          -->
         </v-data-table>
       </v-card>
     </v-row>
@@ -154,7 +142,6 @@ export default {
       userData.setting_items_per_page = this.pagination.itemsPerPage;
       localStorage.setItem('loginedUser', JSON.stringify(userData));
     };
-
   },
 
   data: () => ({
@@ -425,7 +412,7 @@ export default {
       });
     },
 
-    save () { //確定 新增/編輯 user資料
+    save() { //確定 新增/編輯 user資料
       console.log("click save button, editedIndex: ", this.editedIndex);
 
       if (this.editedIndex == -1) {    //add

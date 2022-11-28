@@ -329,11 +329,13 @@ def list_stockin_data():
                 k1 = '-20度C'
 
             _obj = {
+                'id': intag.id,
                 'stockInTag_reagID': reagent.reag_id,
                 'stockInTag_reagName': reagent.reag_name,
                 'stockInTag_reagPeriod': reagent.reag_period,
                 'stockInTag_reagTemp': k1,
                 'stockInTag_Date': intag.intag_date,  # 入庫日期
+                'stockInTag_EmpID': user.emp_id,
                 'stockInTag_Employer': user.emp_name,
                 'stockInTag_batch': intag.batch,
                 'stockInTag_cnt': intag.count,

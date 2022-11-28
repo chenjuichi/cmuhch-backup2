@@ -467,6 +467,88 @@ def update_StockOut_and_StockIn_data():
     })
 
 
+# from user table update some data by id
+@updateTable.route("/updateStockIn", methods=['POST'])
+def update_stockIn():
+    print("updateStockIn....")
+    request_data = request.get_json()
+
+    intag_id = request_data['id']
+    employer = (request_data['stockInTag_Employer'] or '')
+    reagID = (request_data['stockInTag_reagID'] or '')
+    date = (request_data['stockInTag_Date'] or '')
+    cnt = (request_data['stockInTag_cnt'] or '')
+    batch = (request_data['stockInTag_batch'] or '')
+
+    print("data: ", employer, reagID, date, cnt, batch)
+
+    return_message = ''
+    return_value = True  # true: 資料正確, 註冊成功
+    if reagID == "" or employer == "" or date == "" or cnt == "" or batch == "":
+        return_value = False  # false: 資料不完全
+        return_message = '資料錯誤!'
+
+    s = Session()
+    _user = s.query(User).filter_by(emp_name=employer).first()
+    if not _user:
+        return_value = False  # if the user data does not exist
+
+    _reagent = s.query(Reagent).filter_by(reag_id=reagID).first()
+    if not _reagent:
+        return_value = False  # if the reagent data  does not exist
+
+    s = Session()
+
+    if return_value:
+        s.query(InTag).filter(InTag.id == intag_id).update({
+            'user_id': _user.id,
+            'reagent_id': _reagent.id,
+            'count': cnt,
+            'batch': batch,
+            'intag_date': date,
+        })
+
+        s.commit()
+
+    s.close()
+
+    return jsonify({
+        'status': return_value,
+        'message': return_message,
+    })
+
+
+@updateTable.route("/updateStockInByCnt", methods=['POST'])
+def update_StockIn_by_cnt():
+    print("updateStockInByCnt....")
+
+    request_data = request.get_json()
+
+    cnt = (request_data['stockInTag_cnt'] or '')
+    intag_id = (request_data['id'] or '')
+
+    print("data: ", cnt, intag_id)
+
+    return_message = ''
+    return_value = True  # true: 資料正確, true
+    if intag_id == "" or cnt == "":
+        return_value = False  # false: 資料不完全
+        return_message = '數量資料錯誤!'
+
+    if return_value:
+        s = Session()
+        intag = s.query(InTag).filter_by(id=intag_id).first()
+        intag.count = cnt
+        s.commit()
+
+        s.close()
+
+    return jsonify({
+        'status': return_value,
+        'message': return_message,
+    })
+
+
 @updateTable.route("/updateStockInDataByInv", methods=['POST'])
 def update_StockIn_data_by_Inv():
     print("updateStockInDataByInv....")

@@ -192,7 +192,9 @@
                           <v-select
                             :items="['室溫','2~8度C','-20度C']"
                             label="保存溫度"
-
+                            style="position:relative; top: 10px;"
+                            dense
+                            outlined
                             v-model="editedItem.reag_temp"
                             @focus="fieldFocus"
                           ></v-select>

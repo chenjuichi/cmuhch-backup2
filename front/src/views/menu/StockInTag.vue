@@ -57,10 +57,10 @@
                             v-model="fromDateMenu"
                             :close-on-content-click="false"
                             :nudge-right="40"
-                            lazy
+
                             transition="scale-transition"
                             offset-y
-                            full-width
+
                             max-width="290px"
                             min-width="290px"
                           >
@@ -137,7 +137,10 @@
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn color="blue darken-1" text @click="close">取消</v-btn>
-                    <v-btn color="blue darken-1" text @click="save">儲存</v-btn>
+                    <v-btn color="blue darken-1" text @click="save" :disabled='checkDataForSaveButton'>確定</v-btn>
+                    <v-tooltip v-model="tosterOK" bottom :position-x="toster_pos_x" :position-y="toster_pos_y" color="error">
+                      <span>資材碼重複!</span>
+                    </v-tooltip>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -154,16 +157,14 @@
               </v-dialog>
             </v-toolbar>
           </template>
-
+          <!-- 更改數量 -->
           <template v-slot:[`item.stockInTag_cnt`]="{ item }">
             <v-text-field
               v-model="item.stockInTag_cnt"
-
               type="number"
               min=1
               max=20
               oninput="if(Number(this.value) > Number(this.max)) this.value = this.max;"
-
               @input="getdata(item)"
             ></v-text-field>
           </template>
@@ -176,32 +177,9 @@
               mdi-delete
             </v-icon>
           </template>
-
+          <!--
           <template v-slot:no-data>
             <v-btn color="primary" @click="initialize">Reset</v-btn>
-          </template>
-
-          <!--
-          <template v-slot:no-data>
-            <div></div>
-          </template>
-          -->
-          <!--
-          <template v-slot:body.append>
-            <v-row align="center" justify="center" v-show="in_drafTags != 0">
-              <v-col cols="12" md="4">
-                <v-btn color="primary" dark class="ma-2" @click.prevent="tags_draftButton">
-                  暫存
-                </v-btn>
-              </v-col>
-              <v-col cols="12" md="4">
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-btn color="primary" dark class="ma-2" @click.prevent="tags_saveButton">
-                  確定
-                </v-btn>
-              </v-col>
-            </v-row>
           </template>
           -->
         </v-data-table>
@@ -275,6 +253,11 @@ export default {
 
     pagination: {},
 
+    tosterOK: false,
+    toster_pos_x: 1000,
+    toster_pos_y: 400,
+    toster_delay:3,
+
     //資料表頭
     headers: [
       //{ text: 'ID', sortable: false, value: 'id', width: '10%', align: 'start'},
@@ -327,7 +310,7 @@ export default {
       },
     ],
     */
-
+    /*
     stockInTag_Desserts: [
       {
         //id: 1,
@@ -456,7 +439,7 @@ export default {
         stockInTag_cnt: 1,
       },
     ],
-
+    */
     in_newTags: 0,
     in_drafTags: 0,
 
@@ -513,10 +496,10 @@ export default {
       }
     },
 
-    fromReagIdDisp () {
+    fromReagIdDisp() {
       if (this.editedItem.stockInTag_reagID != '') {
         //console.log("result 1...");
-        const result = this.stockInTag_Desserts.find(x => x.stockInTag_reagID === this.editedItem.stockInTag_reagID);
+        const result = this.temp_desserts.find(x => x.stockInTag_reagID === this.editedItem.stockInTag_reagID);
         //console.log("result 1-2...", result);
 
         if (result != 'undefined' && result != null) {
@@ -548,6 +531,15 @@ export default {
         this.editedItem.stockInTag_Date = yy_value + '/' + mmdd_value;
       }
       return this.fromDateVal;
+    },
+
+    checkDataForSaveButton() {
+      if (!!this.editedItem.stockInTag_reagID && !!this.editedItem.stockInTag_EmpID &&
+          !this.errorShowForEmployer && !this.errorShowForReagName) {
+        return false;
+      } else {
+        return true
+      }
     },
   },
 
@@ -784,7 +776,9 @@ export default {
 
     getdata(item) {
       this.editedIndex = this.desserts.indexOf(item);
-      console.log(this.desserts[this.editedIndex].stockInTag_cnt);
+      //console.log(this.desserts[this.editedIndex].stockInTag_cnt);
+
+      this.updateStockInByCnt(this.desserts[this.editedIndex]);
     },
 
     editItem (item) {
@@ -798,11 +792,45 @@ export default {
       this.editedIndex = this.desserts.indexOf(item)
       this.editedItem = Object.assign({}, item)
       this.dialogDelete = true
+      console.log("delete item: ", item, this.editedItem)
     },
 
     deleteItemConfirm () {
-      this.desserts.splice(this.editedIndex, 1)
-      this.closeDelete()
+      //this.removeStockIn(this.editedItem.emp_id);
+      this.removeStockIn(this.editedItem);
+
+      if (!this.tosterOK) {
+        this.desserts.splice(this.editedIndex, 1)
+        console.log("deleteItem: ", this.editedItem);
+
+        this.closeDelete()
+      }
+    },
+
+    //removeStockIn(id) {  //依user id來刪除後端table資料
+    removeStockIn(object) {  //依user id來刪除後端table資料
+      console.log("---click remove_stockIn data---", object);
+
+      const  path='/removeStockIn';
+      let payload = Object.assign({}, object);
+
+      //let payload= {
+      //  ID: id,
+      //};
+      axios.post(path, payload)
+      .then(res => {
+        console.log("remove stockIn status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem)
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err)
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
     },
 
     close () {
@@ -821,7 +849,26 @@ export default {
       })
     },
 
-    save () {
+    save() {
+      console.log("click save button, editedIndex: ", this.editedIndex);
+
+      if (this.editedIndex == -1) {    //add
+        console.log("click save, add")
+        this.createStockIn(this.editedItem);
+        if (!this.tosterOK) {
+          this.desserts.push(this.editedItem);
+          this.in_drafTags++;
+          this.close();
+        }
+      } else {    //edit
+        console.log("click save, update")
+        this.updateStockIn(this.editedItem);
+        if (!this.tosterOK) {
+          Object.assign(this.desserts[this.editedIndex], this.editedItem)
+          this.close();
+        }
+      }
+      /*
       if (this.editedIndex > -1) {
         Object.assign(this.desserts[this.editedIndex], this.editedItem)
       } else {
@@ -830,9 +877,77 @@ export default {
         this.in_drafTags++;
       }
       this.close()
+      */
     },
 
-    tags_draftButton () {
+    updateStockIn(object) {  //編輯 後端table資料
+      console.log("---click update_stockIn data---", object);
+
+      const path='/updateStockIn';
+      let payload = Object.assign({}, object);
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update StockIn data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem);
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
+    },
+
+    updateStockInByCnt(object) {  //編輯 後端table資料
+      console.log("---click update_stockIn_by_cnt data---", object);
+
+      const path='/updateStockInByCnt';
+      let payload = Object.assign({}, object);
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update StockIn data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem);
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
+    },
+
+    createStockIn(object) {  //新增 後端table資料
+      console.log("---click createStockIn data---, editdata:", object);
+
+      //const defaultPassword='a12345678';
+      const path='/createStockIn';
+      object.stockInTag_cnt=1;
+      let payload = Object.assign({}, object);
+      axios.post(path, payload)
+      .then(res => {
+        console.log("save StockIn data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem)
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
+    },
+
+    tags_draftButton() {
       console.log("press draf Button...");
 
       localStorage.setItem("tags_draft", JSON.stringify(this.desserts));
