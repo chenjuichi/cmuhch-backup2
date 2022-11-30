@@ -1,6 +1,8 @@
 import os
 import datetime
 
+import csv
+
 # ------------------------------------------------------------------
 
 import openpyxl
@@ -49,7 +51,78 @@ def modify_InTags_grid(_id, _station, _layout, _pos, _reagID):
 
     return return_gridID
 
+
 # ------------------------------------------------------------------
+
+
+@excelTable.route("/exportToCSVForStockIn", methods=['POST'])
+def export_to_CSV_for_StockIn():
+    print("exportToCSVForStockIn....")
+
+    request_data = request.get_json()
+
+    _blocks = request_data['blocks']
+    _count = request_data['count']
+    temp = len(_blocks)
+    data_check = (True, False)[_count == 0 or temp == 0 or _count != temp]
+
+    print("data: ", _blocks)
+
+    return_value = True  # true: write into csv成功
+    if not data_check:  # false: 資料不完全
+        return_value = False
+
+    if return_value:
+
+        # 查看當前工作目錄
+        olddir = os.getcwd()
+        print("當前工作目錄:%s" % olddir)
+
+        mypath = 'c:\\cmuhch\\barcode\\print.csv'
+        mydir = 'c:\\cmuhch\\barcode\\'
+        myfile = 'print.csv'
+
+        if os.path.isfile(mypath):
+            os.chdir(mydir)  # 進入csv目錄
+            # im.close()
+            os.remove(myfile)
+        else:
+            if not os.path.exists(mydir):
+                os.makedirs(mydir)
+            os.chdir(mydir)  # 進入csv目錄
+
+        # 查看當前工作目錄
+        curdir = os.getcwd()
+        print("修改後工作目錄:%s" % curdir)
+
+        # csvfile = open(myfile, 'a+')    # 使用 a+ 模式開啟檔案
+        csvfile = open(myfile, 'w', newline='')
+        try:
+            fieldnames = ['name1', 'name2',
+                          'stockInTag_reagID',
+                          'stockInTag_batch',
+                          'stockInTag_Date',
+                          'stockInTag_Employer',
+                          'stockInTag_reagTemp',
+                          'stockInTag_alpha',
+                          'stockInTag_cnt']  # 定義要寫入資料的鍵
+            data = csv.DictWriter(
+                csvfile, fieldnames=fieldnames)  # 設定 data 為寫入資料
+            data.writerows(_blocks)
+
+        finally:
+            csvfile.close()
+
+        os.system("barcode.bat")
+        #os.system("type print.csv")
+
+        os.chdir(olddir)  # 進入server工作目錄
+        print("最後工作目錄:%s" % olddir)
+
+    return jsonify({
+        'status': return_value,
+        'outputs': mypath,
+    })
 
 
 @excelTable.route("/exportToExcelForReq", methods=['POST'])
@@ -183,6 +256,8 @@ def export_to_Excel_for_Stock():
 
 
 '''
+
+
 @excelTable.route("/exportToExcelForInv", methods=['POST'])
 def export_to_Excel_for_Inventory():
     print("exportToExcelForInv....")
@@ -227,13 +302,13 @@ def export_to_Excel_for_Inventory():
             temp_array.append(obj['stockInTag_reagTemp'])   # 保存溫度
             temp_array.append(obj['stockInTag_Date'])       # 入庫日期
             temp_array.append(obj['stockInTag_Employer'])   # 入庫人員
-            
-            ##temp_array.append(obj['stockInTag_grid'])       # 儲位
-            ##temp_array.append(obj['stockInTag_cnt'])        # 數量
-            ##temp_array.append(obj['stockInTag_comment'])    # 說明
+
+            # temp_array.append(obj['stockInTag_grid'])       # 儲位
+            # temp_array.append(obj['stockInTag_cnt'])        # 數量
+            # temp_array.append(obj['stockInTag_comment'])    # 說明
             ##
-            ##ws.append(temp_array)
-            
+            # ws.append(temp_array)
+
             gridID = 0
             if obj['intag_id'] != "":
                 if obj['isGridChange']:  # 儲位有變更
@@ -325,7 +400,7 @@ def export_to_Excel_for_Inventory():
 
             temp_array.append(obj['stockInTag_grid'])       # 儲位
             temp_array.append(obj['stockInTag_cnt'])        # 在庫數
-            temp_array.append(obj['stockInTag_cnt_inv_mdf'])# 盤點數
+            temp_array.append(obj['stockInTag_cnt_inv_mdf'])  # 盤點數
             temp_array.append(obj['stockInTag_comment'])    # 說明
 
             ws.append(temp_array)

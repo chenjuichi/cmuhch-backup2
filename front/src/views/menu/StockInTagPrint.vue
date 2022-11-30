@@ -3,7 +3,7 @@
   <v-sheet class="overflow-hidden" style="position: relative;">
     <v-container fluid>
       <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-        <v-card width="80vw">
+        <v-card width="90vw">
           <v-data-table
             v-model="selected"
             :headers="headers"
@@ -12,12 +12,12 @@
             :single-select="singleSelect"
             item-key="stockInTag_reagID"
             show-select
-                    
-            :options.sync="pagination"      
+
+            :options.sync="pagination"
             :footer-props="{itemsPerPageText: '每頁的資料筆數'}"
           >
           <template v-slot:top>
-            <v-toolbar flat>              
+            <v-toolbar flat>
               <v-toolbar-title style="height: 40px;">入庫標籤列印作業</v-toolbar-title>
               <v-divider class="mx-4" inset vertical></v-divider>
               <v-spacer></v-spacer>
@@ -25,31 +25,33 @@
                 <v-icon left dark>mdi-printer</v-icon>
                 預覽標籤
               </v-btn>
-            </v-toolbar>     
-            <v-switch 
-              v-model="singleSelect" 
-              label="個別選項" 
+            </v-toolbar>
+            <!--bug, 待解決
+            <v-switch
+              v-model="singleSelect"
+              label="個別選項"
               style="height: 40px; margin-top:0px; padding-top:0px;"
             ></v-switch>
+            -->
           </template>
           <template v-slot:[`item.stockInTag_cnt`]="{ item }">
             <v-text-field
               v-model="item.stockInTag_cnt"
-              
+
               type="number"
               min=1
               max=20
-              oninput="if(Number(this.value) > Number(this.max)) this.value = this.max;"            
-            
-              @input="getdata(item)"         
+              oninput="if(Number(this.value) > Number(this.max)) this.value = this.max;"
+
+              @input="getdata(item)"
             ></v-text-field>
-          </template>       
+          </template>
           </v-data-table>
         </v-card>
       </v-row>
 
       <v-row align="center" justify="space-around" v-else>
-          <v-dialog 
+          <v-dialog
             v-model="permDialog"
             transition="dialog-bottom-transition"
             max-width="500"
@@ -58,8 +60,8 @@
               <v-toolbar
                 color="primary"
                 dark
-              >錯誤訊息!</v-toolbar>          
-              <v-card-text> 
+              >錯誤訊息!</v-toolbar>
+              <v-card-text>
                 <div class="text-h4 pa-12">使用這項功能, 請通知管理人員...</div>
               </v-card-text>
               <v-card-actions class="justify-end">
@@ -68,7 +70,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-      </v-row>    
+      </v-row>
     </v-container>
 
     <v-navigation-drawer
@@ -77,9 +79,9 @@
       width="25vw"
       temporary
       right
-      app       
+      app
     >
-    
+
     <SideBar :sidebar="selected" :drawer="drawer" @waitTags="onWaitTags"></SideBar>
 
     </v-navigation-drawer>
@@ -106,9 +108,11 @@ export default {
 
   mounted() {
     console.log("StockInTag, mounted()...");
- 
+
+    //document.addEventListener('click', this.onClick);
+
     this.root = document.documentElement;
-    
+
     // if back button is pressed
     window.onpopstate = () => {
     //window.onpopstate = function(event) {
@@ -125,7 +129,7 @@ export default {
 
   data: () => ({
     currentUser: {},
-    
+
     total_tags: 0,
 
     permDialog: false,
@@ -134,18 +138,23 @@ export default {
     errorShowForEmployer: false,
     errorShowForReagName: false,
 
-    dialog: false, 
-    
+    tosterOK: false,
+
+    dialog: false,
+
     drawer: false,
     root: null,
-        
+    reload: false,
+
     singleSelect: false,
+    //singleSelect: true,
     selected: [],
+    temp_selected: [],
 
     pagination: {},
 
     //資料表頭
-    headers: [      
+    headers: [
       //{ text: 'ID', sortable: false, value: 'id', width: '10%', align: 'start'},
       { text: '資材碼', sortable: true, value: 'stockInTag_reagID', width: '10%' },
       { text: '品名', sortable: false, value: 'stockInTag_reagName', width: '20%' },
@@ -155,8 +164,8 @@ export default {
       { text: '入庫人員', sortable: false, value: 'stockInTag_Employer', width: '15%' },
       { text: '批號', sortable: false, value: 'stockInTag_batch', width: '10%' },
       { text: '張數', sortable: false, value: 'stockInTag_cnt', width: '8%' },
-    ], 
-    
+    ],
+
     in_drafTags: 0,
 
     desserts: [],
@@ -169,7 +178,7 @@ export default {
   }),
 
   computed: {
-    check_selected() {   
+    check_selected() {
       if (Array.isArray(this.selected) && this.selected.length) {
         // array exists and is not empty
         return true;
@@ -186,7 +195,8 @@ export default {
 
     load_SingleTable_ok(val) {
       if (val) {
-        this.desserts = Object.assign([], this.temp_desserts);
+        //this.desserts = Object.assign([], this.temp_desserts);
+        this.desserts =  JSON.parse(JSON.stringify(this.temp_desserts));
       }
     },
 
@@ -196,13 +206,28 @@ export default {
           if (this.drawer) {
             console.log("disable scrollbar...");
             this.root.style.setProperty('--bar','hidden');
+            this.reload=true;
           } else {
             console.log("enable scrollbar...");
             this.root.style.setProperty('--bar','scroll');
+            if (this.reload) {
+              let temp_arr=[];
+              temp_arr =  JSON.parse(JSON.stringify(this.temp_desserts));
+              this.desserts = Object.assign([], temp_arr);
+              temp_arr=[];
+              temp_arr =  JSON.parse(JSON.stringify(this.temp_selected));
+              this.selected = Object.assign([], temp_arr);
+              //window.location.reload();
+              this.reload=false;
+            }
           }
         });
       },
       immediate: true,
+    },
+
+    selected(val) {
+      this.temp_selected =  JSON.parse(JSON.stringify(val));
     },
   },
 
@@ -219,13 +244,12 @@ export default {
 
     this.pagination.itemsPerPage=this.currentUser.setting_items_per_page
 
-
     ////load 入庫草案資料
     //this.in_drafTags=0
     //if ("tags_draft" in localStorage) {
     //  let tempDesserts = JSON.parse(localStorage.getItem("tags_draft") || "[]");
     //  console.log("# of desserts: ", tempDesserts.length, tempDesserts);
-    //  this.in_drafTags=tempDesserts.length; 
+    //  this.in_drafTags=tempDesserts.length;
     //}
 
     this.load_SingleTable_ok=false;
@@ -241,7 +265,7 @@ export default {
       this.listStockInTagPrintData();
       /*
       this.desserts = [
-        
+
         {
           //id: 1,
           stockInTag_reagID: '123456789',
@@ -410,7 +434,7 @@ export default {
           stockInTag_batch: '1110012345A123400001',
           stockInTag_cnt: 10,
         },
-        
+
       ];
       */
     },
@@ -421,22 +445,46 @@ export default {
       axios.get(path)
       .then((res) => {
         this.temp_desserts = res.data.outputs;
-        console.log("GET ok, total records:", res.data.outputs.length);        
+        console.log("GET ok, total records:", res.data.outputs.length);
         this.load_SingleTable_ok=true;
       })
       .catch((error) => {
         console.error(error);
         this.load_SingleTable_ok=false;
       });
-    },      
+    },
 
-    //setRowStyle(item) {
-    //  return 'style-1';
-    //},
+    setRowStyle(item) {
+      return 'style-for-data-table';
+    },
 
     getdata(item) {
       this.editedIndex = this.desserts.indexOf(item);
       console.log(this.desserts[this.editedIndex].stockInTag_cnt);
+      this.temp_desserts[this.editedIndex].stockInTag_cnt = this.desserts[this.editedIndex].stockInTag_cnt;
+      this.updateStockInByCnt(this.desserts[this.editedIndex]);
+    },
+
+    updateStockInByCnt(object) {  //編輯 後端table資料
+      console.log("---click update_stockInTagPrint_by_cnt data---", object);
+
+      const path='/updateStockInByCnt';
+      let payload = Object.assign({}, object);
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update StockInTagPrint data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem);
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
     },
 
     onWaitTags(value) {
@@ -449,6 +497,34 @@ export default {
       localStorage.setItem("totalTags", this.total_tags);
 
       console.log("leave onWaitTags()...");
+
+      this.updateStockInByPrintFlag();
+
+      this.desserts = this.desserts.filter(val => !this.selected.includes(val));
+    },
+
+    updateStockInByPrintFlag() {
+      console.log("---click update_stockIn_by_printFlag---");
+
+      const path='/updateStockInByPrintFlag';
+      let payload= {
+        blocks: this.selected,
+        count: this.selected.length,
+      };
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update StockInTagPrint data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
     },
 
     printSection() {
@@ -459,15 +535,15 @@ export default {
         name: 'RenderBarCode',
         params: {
           selectDatas: this.selected,
-        }        
+        }
       });
-      */      
+      */
     },
 
     permCloseFun () {
       this.permDialog = false
       console.log("press permission Close Button...");
-      this.$router.push('/navbar'); 
+      this.$router.push('/navbar');
     },
   },
 }
@@ -475,12 +551,12 @@ export default {
 
 <style>
 :root {
-  --bar: scroll;  
+  --bar: scroll;
 }
 
 html {
-  overflow-y: var(--bar) !important; 
-} 
+  overflow-y: var(--bar) !important;
+}
 </style>
 
 <style lang="scss" scoped>
@@ -494,11 +570,22 @@ div.v-toolbar__title {
 }
 
 ::v-deep .v-data-table-header {
-  background-color: #7DA79D;  
+  background-color: #7DA79D;
 }
 
 ::v-deep .v-data-table-header th {
   font-size: 1em !important;
+}
+
+::v-deep .style-for-data-table td {
+  padding-left: 8px !important;
+  padding-right: 0px !important;
+}
+
+::v-deep .v-data-table > .v-data-table__wrapper > table > thead > tr > th {
+  padding-left: 8px !important;
+  padding-right: 0px !important;
+  text-align: start !important;
 }
 
 ::v-deep .v-label {
@@ -511,18 +598,20 @@ div.v-toolbar__title {
 
 ::v-deep .v-data-table-header th:nth-child(1) i {
   color: blue;
+  //visibility:hidden;    //bug, 待解決
+  display:none;
 }
 
-::v-deep header { 
+::v-deep header {
   height: 48px !important;
   margin-top: 10px !important;
 }
 
-::v-deep .v-toolbar__content { 
+::v-deep .v-toolbar__content {
   height: 42px !important;
 }
 
-::v-deep .v-toolbar__title { 
+::v-deep .v-toolbar__title {
   height: 40px !important;
 }
 

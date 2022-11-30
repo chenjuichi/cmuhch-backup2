@@ -2,7 +2,7 @@
 <v-app>
   <v-container fluid>
     <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-      <v-card width="83vw" class="pa-md-4  mt-5 mx-lg-auto">
+      <v-card width="100vw" class="pa-md-4  mt-5 mx-lg-auto">
         <v-data-table
           :headers="headers"
           :items="desserts"
@@ -463,14 +463,14 @@ export default {
     },
 
     'editedItem.reag_name': function () {
-      let isNameRule = /^[\u4e00-\u9fa5_a-zA-Z0-9]+$/;
+      let isNameRule = /^\w{1,50}$/;
 
       this.nameErrMsg = '';
       let result = this.editedItem.reag_name.search(isNameRule);
       let len=this.editedItem.reag_name.length
       console.log("reg: ", result, len);
-      if (len<=50) {
-      //if (result != -1) {
+      //if (len<=50) {
+      if (result != -1) {
         this.nameErrMsg = '';
       } else {
         this.nameErrMsg = '資料格式錯誤!';
@@ -817,7 +817,11 @@ div.v-toolbar__title {
 }
 
 ::v-deep .v-data-table-header th {
-  font-size: 1em !important;
+  font-size: 0.8em !important;
+}
+
+::v-deep .v-data-table td {
+  font-size: 12px !important;
 }
 
 ::v-deep .v-data-table-header th:nth-last-child(1) {
@@ -836,10 +840,10 @@ div.v-toolbar__title {
 }
 
 ::v-deep .v-label {
-  font-size: 1em
+  font-size: 0.8em
 }
 ::v-deep .v-label--active {
-  font-size: 1.2em;
+  font-size: 1em;
   font-weight: bold;
 }
 

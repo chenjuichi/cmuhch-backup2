@@ -2,7 +2,7 @@
 <v-app>
   <v-container fluid>
     <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-      <v-card width="75vw">
+      <v-card width="86vw">
         <v-data-table
           :headers="headers"
           :items="desserts"
@@ -776,7 +776,8 @@ export default {
 
     getdata(item) {
       this.editedIndex = this.desserts.indexOf(item);
-      //console.log(this.desserts[this.editedIndex].stockInTag_cnt);
+      console.log(this.desserts[this.editedIndex].stockInTag_cnt);
+      this.temp_desserts[this.editedIndex].stockInTag_cnt = this.desserts[this.editedIndex].stockInTag_cnt;
 
       this.updateStockInByCnt(this.desserts[this.editedIndex]);
     },

@@ -29,7 +29,7 @@ export default {
         let _host=window.location.host;
         _host = _host.slice(0, _host.lastIndexOf(":"));
         let _protocol=window.location.protocol;
-        axios.defaults.baseURL = _protocol + "//"+ _host + ':5050';     //for backend server
+        axios.defaults.baseURL = _protocol + "//"+ _host + ':6060';     //for backend server
         axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';   //確認request是否為XHR(XML Http Request)或者是正常的请求
 
         //axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';

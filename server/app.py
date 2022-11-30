@@ -135,4 +135,4 @@ def mqtt_stationA():
 
 if __name__ == '__main__':
     #    app.run(host='0.0.0.0', port=2020, debug=True)
-    app.run(host=host_ip, port=5050, debug=True)
+    app.run(host=host_ip, port=6060, debug=True)

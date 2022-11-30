@@ -182,7 +182,7 @@ class Reagent(BASE):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     reag_id = Column(String(9), nullable=False)
-    reag_name = Column(String(10), nullable=False)
+    reag_name = Column(String(50), nullable=False)
     reag_In_unit = Column(String(10), nullable=False)  # 入庫單位
     reag_Out_unit = Column(String(10), nullable=False)  # 出庫單位
     reag_scale = Column(Integer)  # 比例

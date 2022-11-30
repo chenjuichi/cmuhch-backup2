@@ -65,7 +65,7 @@ const router = new VueRouter({
   base: '/',
   routes
 })
-/*
+
 router.beforeEach((to, from, next) => {
   let isAuthenticated=localStorage.getItem('Authenticated');
   if (isAuthenticated == null) {
@@ -80,5 +80,5 @@ router.beforeEach((to, from, next) => {
     next();
   }
 })
-*/
+
 export default router

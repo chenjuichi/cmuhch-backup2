@@ -26,7 +26,7 @@ mounted () {
     console.log("host: current ip:", currentIP);
 
     this.url_host = currentIP + ":8060";
-    this.host = currentIP + ":5050";
+    this.host = currentIP + ":6060";
 
     this.protocol = window.location.protocol;
     axios.defaults.baseURL = this.protocol + "//" + this.host;

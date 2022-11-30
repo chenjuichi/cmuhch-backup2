@@ -1,4 +1,7 @@
+import time
 import datetime
+import pytz
+from tzlocal import get_localzone  # $ pip install tzlocal
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
@@ -518,6 +521,51 @@ def update_stockIn():
     })
 
 
+@updateTable.route("/updateStockInByPrintFlag", methods=['POST'])
+def update_StockIn_by_printFlag():
+    print("updateStockInByPrintFlag....")
+
+    request_data = request.get_json()
+
+    _blocks = request_data['blocks']
+    _count = request_data['count']
+    temp = len(_blocks)
+    data_check = (True, False)[_count == 0 or temp == 0 or _count != temp]
+
+    print("data: ", _blocks)
+
+    return_message = ''
+    return_value = True  # true: 資料正確, true
+    if not data_check:  # false: 資料不完全
+        return_value = False  # false: 資料不完全
+        return_message = '資料錯誤!'
+    #now = datetime.datetime.utcnow()
+    ts = time.time()
+    now = datetime.datetime.fromtimestamp(ts)
+    # utc_now, now = datetime.datetime.utcfromtimestamp(
+    #    ts), datetime.datetime.fromtimestamp(ts)
+    # local_tz = get_localzone()  # get local timezone
+    # local_now = utc_now.replace(tzinfo=pytz.utc).astimezone(
+    #    local_tz)  # utc -> local
+
+    #print("now: ", now)
+    if return_value:
+        s = Session()
+        for obj in _blocks:
+            s.query(InTag).filter(InTag.id == obj['id']).update(
+                {'isPrinted': True,  # true, 條碼已經列印完成
+                 'updated_at': now,  # 資料修改的時間
+                 })
+
+        s.commit()
+        s.close()
+
+    return jsonify({
+        'status': return_value,
+        'message': return_message,
+    })
+
+
 @updateTable.route("/updateStockInByCnt", methods=['POST'])
 def update_StockIn_by_cnt():
     print("updateStockInByCnt....")
@@ -567,6 +615,14 @@ def update_StockIn_data_by_Inv():
         return_message = '資料不完整.'
 
     if return_value:
+        ts = time.time()
+        now = datetime.datetime.fromtimestamp(ts)
+        # utc_now, now = datetime.datetime.utcfromtimestamp(
+        #    ts), datetime.datetime.fromtimestamp(ts)
+        # local_tz = get_localzone()  # get local timezone
+        # local_now = utc_now.replace(tzinfo=pytz.utc).astimezone(
+        #    local_tz)  # utc -> local
+
         s = Session()
 
         for obj in _blocks:
@@ -585,7 +641,8 @@ def update_StockIn_data_by_Inv():
                 # 修改盤點數資料
                 intag.count_inv_modify = int(obj['stockInTag_cnt_inv_mdf'])
                 intag.comment = obj['stockInTag_comment']     # 修改盤點說明資料
-                intag.updated_at = datetime.datetime.utcnow()  # 資料修改的時間
+                intag.updated_at = now  # 資料修改的時間
+                # intag.updated_at = datetime.datetime.utcnow()  # 資料修改的時間
 
                 s.commit()
 

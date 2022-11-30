@@ -339,6 +339,7 @@ def list_stockin_data():
                 'stockInTag_Employer': user.emp_name,
                 'stockInTag_batch': intag.batch,
                 'stockInTag_cnt': intag.count,
+                'stockInTag_alpha': intag.stockIn_alpha,
                 'stockInTag_isPrinted': intag.isPrinted,
                 'stockInTag_isStockin': intag.isStockin,
             }
@@ -375,6 +376,7 @@ def list_stockin_tag_print_data():
                 k1 = '-20度C'
 
             _obj = {
+                'id': intag_print.id,
                 'stockInTag_reagID': reagent.reag_id,
                 'stockInTag_reagName': reagent.reag_name,
                 'stockInTag_reagPeriod': reagent.reag_period,
@@ -383,6 +385,7 @@ def list_stockin_tag_print_data():
                 'stockInTag_Employer': user.emp_name,
                 'stockInTag_batch': intag_print.batch,
                 'stockInTag_cnt': intag_print.count,
+                'stockInTag_alpha': intag_print.stockIn_alpha,
                 # 'stockInTag_cnt': intag_print.count - intag_print.stockOut_temp_count,
                 'stockInTag_isPrinted': intag_print.isPrinted,
                 'stockInTag_isStockin': intag_print.isStockin,
