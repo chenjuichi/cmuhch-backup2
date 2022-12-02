@@ -130,6 +130,31 @@ def mqtt_stationA():
     })
 
 
+# @app.route("/mqtt/station1", methods=['POST'])
+# def mqtt_station1():
+@app.route("/mqtt/station", methods=['POST'])
+def mqtt_station():
+    request_data = request.get_json()
+    myTopic = request_data['topic']
+    myLayout = request_data['layout']
+    myPosBegin = str(request_data['pos_begin'])
+    myPosEnd = str(request_data['pos_end'])
+    myMsg = request_data['msg']
+
+    print("hello /mqtt/station1: " + myTopic)
+    print("message: "+myTopic+' '+myLayout +
+          ' '+myPosBegin+' '+myPosEnd+' '+myMsg)
+
+    # 發布訊息至 Layout/Led 主題
+    MQTT_MSG = json.dumps(
+        {"Layout": myLayout, "Begin": myPosBegin, "End": myPosEnd, "Msg": myMsg})
+    #mqtt_client.publish('Station1', MQTT_MSG)
+    mqtt_client.publish(myTopic, MQTT_MSG)
+
+    return jsonify({
+        'status': 'station1 success',
+    })
+
 # --------------------------
 
 

@@ -48,6 +48,9 @@ CRGB RGBcolor(0, 0, 0); // RGBcolor（红色数值，绿色数值，蓝色数值
 CRGB RGBcolor_000(0, 0, 0);
 
 // global var
+int stripArray[30];
+//int* stripArray;
+int stripIndex=0;
 int myLayout, myBegin, myEnd, mySegments;
 String temp_color[] = {"r", "g", "b", "off"};
 String str_msg= String("off");
@@ -144,30 +147,22 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   if (str_msg.equals("on")) {           // 如果收到的訊息為"on"
     //digitalWrite(LED, LOW);           // 點亮LED
     //Serial.println("Station1/Layout1/Led5 LED ON");
-    String strLed(" Station1/");       // 初始化字串
+    String strLed(" Station1/");        // 初始化字串
     strLed = strLed + ledStrip_layout+"/" + ledStrip_begin + "/" + ledStrip_end + " LED_ON";
     
     Serial.println(strLed);
     led_status =" LedOn";
     
-    leds_setup(myLayout, myBegin-1, mySegments, temp_color[0], 200);
-    //delay(200);
-    FastLED.show();
-    
-  } else if (str_msg.equals("off")){  // 如果收到的訊息為"off"                            
-    //digitalWrite(LED, HIGH);        // 點滅LED
+    strip_color_on(); //power on指定燈條位置    
+  } else if (str_msg.equals("off")){    // 如果收到的訊息為"off"                            
+    //digitalWrite(LED, HIGH);          // 點滅LED
     //Serial.println("Station1/Layout1/Led5 LED OFF");
-    String strLed(" Station1/");       // 初始化字串
+    String strLed(" Station1/");        // 初始化字串
     strLed = strLed + ledStrip_layout + "/" + ledStrip_begin + "/" + ledStrip_end + " LED_OFF";
     Serial.println(strLed);
     led_status =" LedOff";
 
-    leds_setup(myLayout, myBegin-1, mySegments, temp_color[3], 0);
-    //fill_solid(leds1, 30, RGBcolor_000);
-    //fill_solid(leds1 + myBegin - 1 , mySegments, RGBcolor_000);
-    //fill_solid(leds1 + 0, 30, RGBcolor_000);
-    //delay(200);
-    FastLED.show();
+    strip_color_off();  //power off指定燈條位置 
   } 
 }
 
@@ -261,78 +256,55 @@ void init_led_output(){
   delay(500);
 }
 
-//關閉全部leds
-void leds_all_off(){
-  fill_solid(leds1 + 0, 30, RGBcolor_000);
-  fill_solid(leds2 + 0, 30, RGBcolor_000);
-  fill_solid(leds3 + 0, 30, RGBcolor_000);
-  fill_solid(leds4 + 0, 30, RGBcolor_000);
-  fill_solid(leds5 + 0, 30, RGBcolor_000);
+void strip_color_on(){
+  boolean myTest=false;
 
-  FastLED.show();
+  //檢查array內是否有值, true: 有
+  for (int i=0; i<30; i=i+2) {
+    if (myBegin-1 == stripArray[i] && mySegments == stripArray[i+1]) {
+      myTest=true;
+      Serial.println("on STRIP1: " +String(i)+" "+ String(stripArray[i])+" "+String(stripArray[i+1]));        
+      break;
+    }
+  }
+  
+  Serial.println("on STRIP2: "+String(myTest));
+  
+  //新值加入
+  if (myTest==false) {
+    Serial.println("on STRIP3: "+String(stripIndex));
+    stripArray[stripIndex]=myBegin-1;
+    stripIndex++;
+    stripArray[stripIndex]=mySegments;
+    stripIndex++;
+    Serial.println("on STRIP4: "+String(stripArray[stripIndex-2])+" "+String(stripArray[stripIndex-1]));
+  }
+ 
+  for (int i = 0; i < 30; i=i+2) {
+    if (stripArray[i] !=0 || stripArray[i+1] !=0) {      
+      for (int j = stripArray[i]; j < stripArray[i]+stripArray[i+1]; j++){
+        leds1[j] = CRGB::Red;
+        FastLED.show();
+        delay (10);
+      }
+    }
+  }
 }
 
-void leds_all_on(String color_val, uint8_t max_bright) //顏色：r,g,b 亮度:0~255
-{
-    leds_color_set(color_val);
-    FastLED.setBrightness(max_bright);
-    fill_solid(leds1 + 0, 30, RGBcolor);
-    fill_solid(leds2 + 0, 30, RGBcolor);
-    fill_solid(leds3 + 0, 30, RGBcolor);
-    fill_solid(leds4 + 0, 30, RGBcolor);
-    fill_solid(leds5 + 0, 30, RGBcolor);
-    
-    FastLED.show();
-}
-
-void leds_setup(int layout, int address_x, int leds_count, String color_val, uint8_t max_bright) //(層,起始燈,亮幾顆,亮什麼顏色：r,g,b , 亮度:0~255)
-{
-    leds_all_off();
-    leds_color_set(color_val);
-    FastLED.setBrightness(max_bright); // 亮度
-    switch (layout){
-    case 1:
-        fill_solid(leds1 + address_x, leds_count, RGBcolor);
-        break;
-    case 2:
-        fill_solid(leds2 + address_x, leds_count, RGBcolor);
-        break;
-    case 3:
-        fill_solid(leds3 + address_x, leds_count, RGBcolor);
-        break;
-    case 4:
-        fill_solid(leds4 + address_x, leds_count, RGBcolor);
-        break;
-    case 5:
-        fill_solid(leds5 + address_x, leds_count, RGBcolor);
-        break;
-    default:
-        break;
-    }
-}
-
-void leds_color_set(String color_val) // set RGBcolor
-{
-    RGBcolor.r = 0;
-    RGBcolor.g = 0;
-    RGBcolor.b = 0;
-
-    if (color_val == "r")
-    {
-        RGBcolor.r = 255;
-    }
-    else if (color_val == "g")
-    {
-        RGBcolor.g = 255;
-    }
-    else if (color_val == "b")
-    {
-        RGBcolor.b = 255;
-    }
-    else
-    {
-        RGBcolor.r = 0;
-        RGBcolor.g = 0;
-        RGBcolor.b = 0;
-    }
+void strip_color_off(){
+  //檢查array內是否有值, true: 有
+  for (int i=0; i<30; i=i+2) {
+     if (myBegin-1 == stripArray[i] && mySegments == stripArray[i+1]) {
+       Serial.println("off STRIP11: " +String(i)+" "+ String(stripArray[i])+" "+String(stripArray[i+1]));  
+       for (int j = stripArray[i]; j < stripArray[i]+stripArray[i+1]; j++){
+         leds1[j] = CRGB::Black;
+         FastLED.show();
+         delay (10);
+       }
+       stripArray[i]=0;   
+       stripArray[i+1]=0;
+       Serial.println("off STRIP22: " +String(i)+" "+ String(stripArray[i])+" "+String(stripArray[i+1]));          
+       break;
+     }
+  }
 }

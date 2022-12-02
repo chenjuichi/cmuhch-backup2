@@ -1,6 +1,15 @@
 <template>
 <v-app>
   <v-container fluid>
+    <v-snackbar v-model="snackbar" :color="snackbar_color" :right='snackbar_right' :top='snackbar_top'>
+      {{ snackbar_info }}
+      <template v-slot:action="{ attrs }">
+        <v-btn icon :color="snackbar_icon_color" @click="snackbar= false">
+          <v-icon dark>mdi-close-circle</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
+
     <v-row align="center" justify="center" v-if="currentUser.perm == 1 || currentUser.perm == 2">
       <v-card width="93vw" class="pa-md-4 mx-lg-auto">
         <v-toolbar flat>
@@ -17,9 +26,8 @@
               <v-card-text>
                 <v-container>
                   <v-row>
-                    <v-col cols="12" md="4">
-                      <div style="color: #007bff; font-weight: 800;">站別</div>
-                      <vue-numeric-input  v-model="editedItem.grid_station" :min="1" :max="3" :step="1"></vue-numeric-input>
+                    <v-col cols="12" md="1">
+                      <div style="color: #007bff; font-weight: 800;">第{{  tab_index+1 }}站</div>
                     </v-col>
                     <v-col cols="12" md="4">
                       <div style="color: #007bff; font-weight: 800;">層別</div>
@@ -28,6 +36,17 @@
                     <v-col cols="12" md="4">
                       <div style="color: #007bff; font-weight: 800;">格位編號</div>
                       <vue-numeric-input  v-model="editedItem.grid_pos" :min="1" :max="10" :step="1"></vue-numeric-input>
+                    </v-col>
+                    <v-col cols="12" md="3">
+                      <v-switch
+                        v-model="switchOnOff"
+                        inset
+                        @click="confirmCard"
+                      >
+                        <template v-slot:label>
+                          <span class="input__label">{{swString}}</span>
+                        </template>
+                      </v-switch>
                     </v-col>
                   </v-row>
                 </v-container>
@@ -124,6 +143,13 @@ export default {
     return {
       currentUser: {},
       permDialog: false,
+
+      snackbar: false,
+      snackbar_color: 'success',
+      snackbar_right: true,
+      snackbar_top: true,
+      snackbar_info: '',
+      snackbar_icon_color: '#adadad',
 
       //pagination: {
         //itemsPerPage: 10,   //預設值, rows/per page
@@ -260,12 +286,18 @@ export default {
         grid_seg_id: 1,
       },
 
+      switchOnOff: false,
+      sw_on_str: '亮燈',
+      sw_off_str: '熄燈',
+      mqtt_topic:['Station1','Station2','Station3',],
       load_SingleTable_ok: false, //for get grids table data
     }
   },
 
   computed: {
-
+    swString() {
+      return this.switchOnOff ? this.sw_on_str : this.sw_off_str;
+    },
   },
 
   watch: {
@@ -571,12 +603,85 @@ export default {
         this.editedIndex = -1
       })
     },
-    confirmCard () {
 
+    confirmCard () {
+      let temp_segs= {};
+      if (this.tab_index==0) {
+        temp_segs = Object.assign({}, this.tab1_segs);
+        console.log("segment compare", temp_segs, this.tab1_segs)
+      }
+      if (this.tab_index==1) {
+        temp_segs = Object.assign({}, this.tab2_segs);
+        console.log("segment compare", temp_segs, this.tab2_segs)
+      }
+      if (this.tab_index==2) {
+        temp_segs = Object.assign({}, this.tab3_segs);
+        console.log("segment compare", temp_segs, this.tab3_segs)
+      }
+
+      let temp_len=temp_segs[Object.keys(temp_segs)[this.editedItem.grid_layout-1]].length;
+      console.log("tab1_segs", this.editedItem.grid_layout, this.editedItem.grid_pos, temp_segs, "temp_len: ", temp_len);
+      let loop_ok = true;   //true,層與格位編號資料正確
+      let range_begin = 0;
+      let range_end = 0;
+      for (let i=0; i<temp_len; i++) {
+        let temp_seg=parseInt(temp_segs[Object.keys(temp_segs)[this.editedItem.grid_layout-1]][i].seg_id);
+        console.log("tab1_segs, layout", i+1, "  ", temp_segs[Object.keys(temp_segs)[this.editedItem.grid_layout-1]][i]);
+        console.log("tab1_segs, layout, seg_id: ", temp_seg, this.editedItem.grid_pos);
+
+        if (temp_seg == this.editedItem.grid_pos) {
+          range_begin = temp_segs[Object.keys(temp_segs)[this.editedItem.grid_layout-1]][i].range0;
+          range_end = temp_segs[Object.keys(temp_segs)[this.editedItem.grid_layout-1]][i].range1;
+          loop_ok = false;
+          break;
+        }
+      }
+      console.log("tab1_segs step1", loop_ok, "  ", range_begin, "  ", range_end)
+      if (!loop_ok) {
+        let layout=this.editedItem.grid_layout;
+        this.mqttForStation(layout, range_begin, range_end);
+      } else {
+        console.log("格位編號錯誤!");
+        this.snackbar_color='red accent-2';
+        this.snackbar=true;
+        this.snackbar_info= '格位編號錯誤!';
+        this.snackbar_icon_color= '#adadad';
+      }
+    },
+
+    async mqttForStation(layout, range_begin, range_end) {
+        //let path='/mqtt/station1';
+        let path='/mqtt/station';
+        //let temp_layout=this.currentLedLayout.toString();
+        let temp_layout=layout.toString();
+        //let temp_pos=this.currentLedPos.toString();
+        //console.log("stationA:" + ' ' + this.currentIndex + " layout: " + temp_layout + " pos: " + temp_pos)
+        console.log("stationA: " +"layout: " + temp_layout + " pos: " + range_begin + " , " + range_end)
+        let temp_sw= this.switchOnOff ? 'on' : 'off';
+        let payload= {
+          topic: this.mqtt_topic[this.tab_index],
+          layout: temp_layout,
+          pos_begin: range_begin,
+          pos_end: range_end,
+          msg: temp_sw,
+        };
+
+        try {
+          let res = await axios.post(path, payload);
+          console.log("mqtt ok", res.data.status);
+        } catch (err) {
+          console.error(err)
+          console.log("通訊錯誤!");
+          this.snackbar_color='red accent-2';
+          this.snackbar=true;
+          this.snackbar_info= '通訊錯誤!';
+          this.snackbar_icon_color= '#adadad';
+        }
     },
 
     connectMQTT() {
       console.log("connectMQTT()");
+      this.switchOnOff= false;
       this.dialog = true;
     },
 
@@ -650,5 +755,10 @@ small.msgErr {
   position: relative;
   right: -120px;
   top: -17px;
+}
+
+.input__label {
+  color: #007bff;
+  font-weight: 800;
 }
 </style>
