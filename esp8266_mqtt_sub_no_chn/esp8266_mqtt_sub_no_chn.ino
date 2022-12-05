@@ -37,6 +37,8 @@ const String r = "r";
 const String g = "g";
 const String b = "b";
 
+//const unsigned long period = 500;
+
 //Led燈條的變數(global var)
 CRGB leds1[NUM_LEDS]; // 建立光帶leds
 CRGB leds2[NUM_LEDS]; //
@@ -48,11 +50,20 @@ CRGB RGBcolor(0, 0, 0); // RGBcolor（红色数值，绿色数值，蓝色数值
 CRGB RGBcolor_000(0, 0, 0);
 
 // global var
-int stripArray[30];
-//int* stripArray;
+unsigned long tymNow;
+int num2nds;
+
+boolean ledFlash = false;
+
+int stripArray1[30];
+int stripArray2[30];
+int stripArray3[30];
+int stripArray4[30];
+int stripArray5[30];
+
 int stripIndex=0;
 int myLayout, myBegin, myEnd, mySegments;
-String temp_color[] = {"r", "g", "b", "off"};
+//String temp_color[] = {"r", "g", "b", "off"};
 String str_msg= String("off");
 
 char* led_status =" LedOff";
@@ -147,6 +158,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   if (str_msg.equals("on")) {           // 如果收到的訊息為"on"
     //digitalWrite(LED, LOW);           // 點亮LED
     //Serial.println("Station1/Layout1/Led5 LED ON");
+    ledFlash = false;
     String strLed(" Station1/");        // 初始化字串
     strLed = strLed + ledStrip_layout+"/" + ledStrip_begin + "/" + ledStrip_end + " LED_ON";
     
@@ -157,13 +169,20 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   } else if (str_msg.equals("off")){    // 如果收到的訊息為"off"                            
     //digitalWrite(LED, HIGH);          // 點滅LED
     //Serial.println("Station1/Layout1/Led5 LED OFF");
+    ledFlash = false;
     String strLed(" Station1/");        // 初始化字串
     strLed = strLed + ledStrip_layout + "/" + ledStrip_begin + "/" + ledStrip_end + " LED_OFF";
     Serial.println(strLed);
     led_status =" LedOff";
 
     strip_color_off();  //power off指定燈條位置 
-  } 
+  } else if  (str_msg.equals("flash")){
+    String strLed(" Station1/");        // 初始化字串
+    strLed = strLed + ledStrip_layout + "/" + ledStrip_begin + "/" + ledStrip_end + " LED_FLASH";
+    Serial.println(strLed);
+    led_status =" LedFlash";
+    ledFlash = true;
+  }
 }
 
 void setup() { 
@@ -184,7 +203,27 @@ void setup() {
 }
 
 void loop() {
-  String temp_color[] = {"r", "g", "b"};
+  if (ledFlash) {
+    tymNow = millis();
+    num2nds = (tymNow/1000);
+
+    if(num2nds % 2 == 0) {  
+      Serial.println("led flash on");
+      for (int j = myBegin-1; j < myBegin-1 + mySegments; j++){
+        leds1[j] = CRGB::Red;
+        FastLED.show();
+        delay (10);
+      }  
+    }
+    if(num2nds % 2 > 0) {
+      Serial.println("led flash off");
+      for (int j = myBegin-1; j < myBegin-1 + mySegments; j++){
+        leds1[j] = CRGB::Black;
+        FastLED.show();
+        delay (10);
+      }          
+    } 
+  }
   
   delay(200);
 
@@ -246,24 +285,25 @@ void subscribeTopic(){
 //初始化燈條,輸出腳位 D1~D5 對應 leds1~leds5
 void init_led_output(){
   //delay(2000);
-  delay(1000);
+  //delay(100);
   LEDS.addLeds<LED_TYPE, D1, COLOR_ORDER>(leds1, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D2, COLOR_ORDER>(leds2, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D3, COLOR_ORDER>(leds3, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D4, COLOR_ORDER>(leds4, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D5, COLOR_ORDER>(leds5, NUM_LEDS);
   //delay(1000);
-  delay(500);
+  delay(10);
 }
 
 void strip_color_on(){
   boolean myTest=false;
 
+  //ledFlash = false;
   //檢查array內是否有值, true: 有
   for (int i=0; i<30; i=i+2) {
-    if (myBegin-1 == stripArray[i] && mySegments == stripArray[i+1]) {
+    if (myBegin-1 == stripArray1[i] && mySegments == stripArray1[i+1]) {
       myTest=true;
-      Serial.println("on STRIP1: " +String(i)+" "+ String(stripArray[i])+" "+String(stripArray[i+1]));        
+      Serial.println("on STRIP1: " +String(i)+" "+ String(stripArray1[i])+" "+String(stripArray1[i+1]));        
       break;
     }
   }
@@ -273,16 +313,16 @@ void strip_color_on(){
   //新值加入
   if (myTest==false) {
     Serial.println("on STRIP3: "+String(stripIndex));
-    stripArray[stripIndex]=myBegin-1;
+    stripArray1[stripIndex]=myBegin-1;
     stripIndex++;
-    stripArray[stripIndex]=mySegments;
+    stripArray1[stripIndex]=mySegments;
     stripIndex++;
-    Serial.println("on STRIP4: "+String(stripArray[stripIndex-2])+" "+String(stripArray[stripIndex-1]));
+    Serial.println("on STRIP4: "+String(stripArray1[stripIndex-2])+" "+String(stripArray1[stripIndex-1]));
   }
  
   for (int i = 0; i < 30; i=i+2) {
-    if (stripArray[i] !=0 || stripArray[i+1] !=0) {      
-      for (int j = stripArray[i]; j < stripArray[i]+stripArray[i+1]; j++){
+    if (stripArray1[i] !=0 || stripArray1[i+1] !=0) {      
+      for (int j = stripArray1[i]; j < stripArray1[i]+stripArray1[i+1]; j++){
         leds1[j] = CRGB::Red;
         FastLED.show();
         delay (10);
@@ -292,18 +332,19 @@ void strip_color_on(){
 }
 
 void strip_color_off(){
+  //ledFlash = false;
   //檢查array內是否有值, true: 有
   for (int i=0; i<30; i=i+2) {
-     if (myBegin-1 == stripArray[i] && mySegments == stripArray[i+1]) {
-       Serial.println("off STRIP11: " +String(i)+" "+ String(stripArray[i])+" "+String(stripArray[i+1]));  
-       for (int j = stripArray[i]; j < stripArray[i]+stripArray[i+1]; j++){
+     if (myBegin-1 == stripArray1[i] && mySegments == stripArray1[i+1]) {
+       Serial.println("off STRIP11: " +String(i)+" "+ String(stripArray1[i])+" "+String(stripArray1[i+1]));  
+       for (int j = stripArray1[i]; j < stripArray1[i]+stripArray1[i+1]; j++){
          leds1[j] = CRGB::Black;
          FastLED.show();
          delay (10);
        }
-       stripArray[i]=0;   
-       stripArray[i+1]=0;
-       Serial.println("off STRIP22: " +String(i)+" "+ String(stripArray[i])+" "+String(stripArray[i+1]));          
+       stripArray1[i]=0;   
+       stripArray1[i+1]=0;
+       Serial.println("off STRIP22: " +String(i)+" "+ String(stripArray1[i])+" "+String(stripArray1[i+1]));          
        break;
      }
   }

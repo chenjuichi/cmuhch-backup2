@@ -434,7 +434,7 @@ export default {
       console.log("---click update_user data---", object);
 
       const path='/updateUser';
-      var payload= {
+      let payload= {
         emp_id: object.emp_id,
         emp_name: object.emp_name,
         dep: object.emp_dep,

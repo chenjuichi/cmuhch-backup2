@@ -86,7 +86,7 @@ def update_setting():
     return_value = True  # true: 資料正確, 註冊成功
     if userID == "" or newSetting == "":
         return_value = False  # false: 資料不完全 註冊失敗
-    #print("update setting value: ", newSetting, type(newSetting))
+    # print("update setting value: ", newSetting, type(newSetting))
     s = Session()
     # 修改user的設定資料
     _user = s.query(User).filter_by(emp_id=userID).first()
@@ -350,7 +350,7 @@ def update_grid():
         # targid grid
         target_grid = s.query(Grid).filter_by(station=_station,
                                               layout=_layout, pos=_pos).first()
-        #return_value = False
+        # return_value = False
         if not target_grid:
             # new grid
             new_grid = Grid(station=_station, layout=_layout, pos=_pos)
@@ -361,20 +361,20 @@ def update_grid():
             s.commit()
             return_value = True
         elif not (target_grid.id == _id):  # target grid不等於既有的儲位
-            #print("hello__0_1", _id, target_grid.id)
+            # print("hello__0_1", _id, target_grid.id)
             reagent_count = s.query(Reagent).filter_by(
                 grid_id=target_grid.id).count()
-            #print("hello__0_2", reagent_count)
+            # print("hello__0_2", reagent_count)
             if reagent_count >= 2:
                 print("hello, another same records...")
             # remove old grid link
             # print("hello__1")
-            ##old_grid = s.query(Grid).filter_by(id=_id).first()
-            ##reagent = s.query(Reagent).filter_by(reag_id=_reagID).first()
+            # old_grid = s.query(Grid).filter_by(id=_id).first()
+            # reagent = s.query(Reagent).filter_by(reag_id=_reagID).first()
             # old_grid._reagents_on_grid.remove(reagent)
             # print("hello__2")
             # ---
-            #another_grid = s.query(func.count(distinct(Reagent.grid_id)))
+            # another_grid = s.query(func.count(distinct(Reagent.grid_id)))
             # ---
             else:
                 # update current grid link
@@ -394,7 +394,62 @@ def update_grid():
 
 
 # from reagent table update some data by id
-@updateTable.route("/updatePermissions", methods=['POST'])
+@updateTable.route("/updateGridsForLed", methods=['POST'])
+def update_grids_for_led():
+    print("updateGridsForLed....")
+    request_data = request.get_json()
+
+    _tab_segs_block_index = ['tab1_segs', 'tab2_segs', 'tab3_segs']
+    segs_index = ['segments1', 'segments2',
+                  'segments3', 'segments4', 'segments5']
+
+    #ts = time.time()
+    #now = datetime.datetime.fromtimestamp(ts)
+
+    return_value = True
+    s = Session()
+
+    for i in range(3):
+        _tab_segs_block = request_data[_tab_segs_block_index[i]]
+        #print("segment: ", _tab_segs_block)
+
+        for j in range(5):
+            for obj in _tab_segs_block[segs_index[j]]:  # 第i站第j層資料
+                #print("obj: ", i+1, j+1, obj)
+
+                _currentGrid = s.query(Grid).filter_by(
+                    station=obj['grid_station'], layout=obj['grid_layout'], seg_id=obj['seg_id'],).first()
+                if not _currentGrid:
+                    _newGrid = Grid(station=obj['grid_station'],
+                                    layout=obj['grid_layout'],
+                                    seg_id=obj['seg_id'],
+                                    pos=obj['seg_id'],
+                                    range0=obj['range0'],
+                                    range1=obj['range1'],)
+
+                    s.add(_newGrid)
+                    s.flush()
+                    print("--add new grid--",
+                          _tab_segs_block_index[i], segs_index[j], _newGrid.id)
+                else:
+                    print("--update old grid data--",
+                          _tab_segs_block_index[i], segs_index[j], _currentGrid.id)
+                    _currentGrid.pos = obj['seg_id']
+                    _currentGrid.range0 = obj['range0']
+                    _currentGrid.range1 = obj['range1']
+                    # _currentGrid.updated_at = now  # 資料修改的時間   ,2022-12-4, 建議新增updated_at欄位
+
+                s.commit()
+
+    s.close()
+
+    return jsonify({
+        'status': return_value
+    })
+
+
+# from reagent table update some data by id
+@ updateTable.route("/updatePermissions", methods=['POST'])
 def update_permissions():
     print("updatePermissions....")
     request_data = request.get_json()
@@ -432,7 +487,7 @@ def update_permissions():
 
 
 # update intag's stockOut_temp_count and outtag's count data
-@updateTable.route("/updateStockOutAndStockInData", methods=['POST'])
+@ updateTable.route("/updateStockOutAndStockInData", methods=['POST'])
 def update_StockOut_and_StockIn_data():
     print("updateStockOutAndStockInData....")
     request_data = request.get_json()
@@ -471,7 +526,7 @@ def update_StockOut_and_StockIn_data():
 
 
 # from user table update some data by id
-@updateTable.route("/updateStockIn", methods=['POST'])
+@ updateTable.route("/updateStockIn", methods=['POST'])
 def update_stockIn():
     print("updateStockIn....")
     request_data = request.get_json()
@@ -539,7 +594,7 @@ def update_StockIn_by_printFlag():
     if not data_check:  # false: 資料不完全
         return_value = False  # false: 資料不完全
         return_message = '資料錯誤!'
-    #now = datetime.datetime.utcnow()
+    # now = datetime.datetime.utcnow()
     ts = time.time()
     now = datetime.datetime.fromtimestamp(ts)
     # utc_now, now = datetime.datetime.utcfromtimestamp(
@@ -548,7 +603,7 @@ def update_StockIn_by_printFlag():
     # local_now = utc_now.replace(tzinfo=pytz.utc).astimezone(
     #    local_tz)  # utc -> local
 
-    #print("now: ", now)
+    # print("now: ", now)
     if return_value:
         s = Session()
         for obj in _blocks:

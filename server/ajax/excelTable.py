@@ -66,13 +66,20 @@ def export_to_CSV_for_StockIn():
     temp = len(_blocks)
     data_check = (True, False)[_count == 0 or temp == 0 or _count != temp]
 
-    print("data: ", _blocks)
+    #print("data: ", _blocks)
 
     return_value = True  # true: write into csv成功
     if not data_check:  # false: 資料不完全
         return_value = False
 
     if return_value:
+        for obj in _blocks:
+            obj['stockInTag_Employer'] = '入庫人員: ' + \
+                obj['stockInTag_Employer']
+            obj['stockInTag_Date'] = '入庫日期: ' + \
+                obj['stockInTag_Date']
+
+        print("data: ", _blocks)
 
         # 查看當前工作目錄
         olddir = os.getcwd()

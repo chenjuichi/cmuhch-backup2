@@ -41,8 +41,7 @@
                       <v-switch
                         v-model="switchOnOff"
                         inset
-                        @click="confirmCard"
-                      >
+                        @click="confirmCard">
                         <template v-slot:label>
                           <span class="input__label">{{swString}}</span>
                         </template>
@@ -67,7 +66,7 @@
 
           <v-btn color="primary" class="mt-n1 mr-15 mx-auto" elevation="5" @click="saveData">
             <v-icon>mdi-content-save-check</v-icon>
-            確定
+            儲存資料
           </v-btn>
         </v-toolbar>
         <v-tabs vertical>
@@ -656,8 +655,9 @@ export default {
         let temp_layout=layout.toString();
         //let temp_pos=this.currentLedPos.toString();
         //console.log("stationA:" + ' ' + this.currentIndex + " layout: " + temp_layout + " pos: " + temp_pos)
-        console.log("stationA: " +"layout: " + temp_layout + " pos: " + range_begin + " , " + range_end)
-        let temp_sw= this.switchOnOff ? 'on' : 'off';
+        console.log("station: " +"layout: " + temp_layout + " pos: " + range_begin + " , " + range_end)
+        //let temp_sw= this.switchOnOff ? 'on' : 'off';
+        let temp_sw= 'flash';
         let payload= {
           topic: this.mqtt_topic[this.tab_index],
           layout: temp_layout,
@@ -685,8 +685,32 @@ export default {
       this.dialog = true;
     },
 
-    saveData() {
-      console.log("saveData()");
+    saveData() {  //update grid後端table資料
+      console.log("---GridsForLed, click saveData---");
+
+      const path='/updateGridsForLed';
+      let payload= {
+        tab1_segs: this.tab1_segs,
+        tab2_segs: this.tab2_segs,
+        tab3_segs: this.tab3_segs,
+      };
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update grid data, return status: ", res.data.status)
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem)
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        //this.registerOK= false;
+      });
+
     },
   },
 }

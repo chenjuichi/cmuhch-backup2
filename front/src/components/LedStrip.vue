@@ -987,6 +987,9 @@ export default {
           seg_id: parseInt(this.segment_values[index]),
           range0: r0,
           range1: r1,
+          grid_layout: index+1,
+          grid_station: this.my_key+1,
+
         }
         this.segments[Object.keys(this.segments)[index]].push(obj);
 

@@ -448,7 +448,8 @@ export default {
     },
 
     'editedItem.reag_id': function () {
-      let isEmpIDRule = /^\w{1,9}$/;
+      //let isEmpIDRule = /^\w{1,9}$/;
+      let isEmpIDRule = /^[A-Za-z0-9.]{1,9}$/;
 
       this.IDErrMsg = '';
       let result = this.editedItem.reag_id.search(isEmpIDRule);

@@ -11,8 +11,9 @@
     </v-snackbar>
 
     <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-      <v-card width="90vw" class="pa-md-4 mt-5 mx-lg-auto">
+      <v-card width="100vw" class="pa-md-4 mt-5 mx-lg-auto">
         <v-data-table
+
           dense
           :headers="headers"
           :items="dessertsDisplay"
@@ -254,6 +255,7 @@
                   readonly
                   v-model="temp_desserts[index].stockInTag_cnt"
                   class="centered-input pe-0 me-2 py-1 my-0 block_myText_inv_cnt"
+                  style="width:20px; max-width:20px;"
                   @input="getData(item)"
                 ></v-text-field>
 
@@ -268,7 +270,7 @@
 
                   v-bind="attrs"
                   v-on="on"
-
+                  style="width:20px; max-width:20px;"
                   class="centered-input pe-0 me-2 py-1 my-0 block_myText_inv_id"
                   :class="{'block_myText_inv_cnt_mdf_color' : item.isEnter}"
                 ></v-text-field>
@@ -282,6 +284,7 @@
                   v-model="item.stockInTag_cnt_inv_mdf"
                   class="centered-input pe-0 me-2 py-1 my-0 block_myText_inv_cnt_mdf"
                   :class="{'block_myText_inv_cnt_mdf_color' : item.isEnter}"
+                  style="width:20px; max-width:20px;"
                   @input="getData(item)"
                   @blur="modifyInvCntForBlur(item)"
                   @focus="modifyInvCntForFocus(item)"
@@ -293,9 +296,29 @@
           </template>
 
           <!-- text field 3 -->
-          <template v-slot:[`item.stockInTag_comment`]="{ item }">
+          <!--<template v-slot:[`item.stockInTag_comment`]="{ item }">-->
+            <template v-slot:item.stockInTag_comment="{ item }">
   <!--  <v-tooltip class="tooltip2" bottom color="red"> T-->
   <!--    <template v-slot:activator="{ on, attrs }"> T-->
+
+            <div v-if="item.stockInTag_comment !== '其他'">
+              <v-select
+                v-model="item.stockInTag_comment"
+
+                :items="comment_items"
+                class="pe-0 me-2 py-1 my-0 myText"
+                required>
+              </v-select>
+            </div>
+            <div v-else>
+              <v-text-field
+                autofocus
+                style="position:relative; top:-10px;"
+                v-model="commentForInventory"
+                v-on:keyup.enter="getComment(item)">
+              </v-text-field>
+            </div>
+<!--
             <v-text-field
               dense
               v-model="item.stockInTag_comment"
@@ -304,6 +327,8 @@
               @input="getComment(item)"
 
             ></v-text-field>
+-->
+
   <!--    </template> T-->
   <!--    <span>請寫說明!</span> T-->
   <!--  </v-tooltip> T-->
@@ -419,16 +444,16 @@ export default {
 
     //資料表頭
     headers: [
-      { text: 'ID', sortable: false, value: 'id', width: '4%', align: 'start' },
-      { text: '資材碼', sortable: true, value: 'stockInTag_reagID', width: '8%' },
-      { text: '品名', sortable: true, value: 'stockInTag_reagName', width: '17%' },
-      { text: '效期', sortable: true, value: 'stockInTag_reagPeriod', width: '7%' },
-      { text: '保存溫度', sortable: false, value: 'stockInTag_reagTemp', width: '8%' },
-      { text: '入庫日期', sortable: true, value: 'stockInTag_Date', width: '8%' },
-      { text: '入庫人員', sortable: true, value: 'stockInTag_Employer', width: '8%' },
-      { text: '格位', sortable: false, value: 'stockInTag_grid', width: '8%' },
-      { text: '在庫數 _ 盤點數', sortable: false, value: 'stockInTag_cnt', width: '11%', align: 'center' },
-      { text: '說明', sortable: false, value: 'stockInTag_comment', width: '18%' },
+      { text: 'ID', sortable: false, value: 'id', width: '40px', align: 'start' },
+      { text: '資材碼', sortable: true, value: 'stockInTag_reagID', width: '90px' },
+      { text: '品名', sortable: true, value: 'stockInTag_reagName', width: '406px' },
+      { text: '效期', sortable: true, value: 'stockInTag_reagPeriod', width: '88px' },
+      { text: '保存溫度', sortable: false, value: 'stockInTag_reagTemp', width: '88px' },
+      { text: '入庫日期', sortable: true, value: 'stockInTag_Date', width: '88px' },
+      { text: '入庫人員', sortable: true, value: 'stockInTag_Employer', width: '96px' },
+      { text: '格位', sortable: false, value: 'stockInTag_grid', width: '88px' },
+      { text: '在庫數 _ 盤點數', sortable: false, value: 'stockInTag_cnt', width: '118px'  },
+      { text: '說明', sortable: false, value: 'stockInTag_comment', width: '136px' },
     ],
 
     pagination: {
@@ -459,6 +484,9 @@ export default {
     //in_drafTags: 0,
 
     //fields: [],
+
+    comment_items: ['人員忘記出入庫', '試劑毀損', '試劑過期', '試劑允收異常', '其他'],
+    commentForInventory: '',
 
     load_SingleTable_ok: false, //for get employer table data
     //load_2thTable_ok: false,    //for get reagent table data
@@ -1005,15 +1033,25 @@ export default {
       //console.log("cnt data: ", this.temp_desserts[this.editedIndex].stockInTag_cnt, item.stockInTag_cnt);
     },
 
-    getComment(item) {
-      //this.editedIndex = this.desserts.indexOf(item);                             //for desserts
-      this.editedIndex = this.desserts.map(object => object.id).indexOf(item.id); //for dessertsDisplay
-      console.log("getComment, index: ", this.editedIndex);
+    //getComment(item) {
+    //  //this.editedIndex = this.desserts.indexOf(item);                             //for desserts
+    //  this.editedIndex = this.desserts.map(object => object.id).indexOf(item.id); //for dessertsDisplay
+    //  console.log("getComment, index: ", this.editedIndex);
+    //
+    //  if (this.temp_desserts[this.editedIndex].stockInTag_comment != item.stockInTag_comment) {
+    //    this.desserts[this.editedIndex].isGridChange=true;
+    //  }
+    //  //console.log("comment data: ", this.temp_desserts[this.editedIndex].stockInTag_comment, item.stockInTag_comment);
+    //},
 
+    getComment(item) {
+      this.editedIndex = this.desserts.map(object => object.id).indexOf(item.id); //for dessertsDisplay
       if (this.temp_desserts[this.editedIndex].stockInTag_comment != item.stockInTag_comment) {
         this.desserts[this.editedIndex].isGridChange=true;
       }
-      //console.log("comment data: ", this.temp_desserts[this.editedIndex].stockInTag_comment, item.stockInTag_comment);
+
+      item.stockInTag_comment = this.commentForInventory;
+      this.comment_items.unshift(item.stockInTag_comment);
     },
 
     //combineCount(item) {
@@ -1111,7 +1149,7 @@ div.v-toolbar__title {
 
 ::v-deep .row_myText_inv {
   /*width: 100%;*/
-  width: 170px;
+  width: 90px;
   margin: 0 8px;
   display: flex;
   justify-content: center; /* for centering 3 blocks in the center */
@@ -1165,7 +1203,7 @@ div.v-toolbar__title {
 }
 ::v-deep .v-data-table-header th:nth-last-child(2) span {
   color: #1f4788 !important;
-  margin-left:2.5em;    /* Creating a tab using CSS and HTML */
+  //margin-left:2.5em;    /* Creating a tab using CSS and HTML */
 }
 ::v-deep .v-data-table-header th:nth-last-child(3) span {
   color: #1f4788 !important;
@@ -1310,6 +1348,17 @@ div.v-toolbar__title {
 ::v-deep .v-data-table__wrapper > table > tbody > tr > td:nth-last-child(2) > .v-input > .v-input__control > .v-input__slot > .v-text-field__slot > input {
   text-align: start;
 }
+
+//::v-deep .v-data-table__wrapper > table > tbody > tr > td:nth-last-child {
+//::v-deep .v-data-table>.v-data-table__wrapper>table>thead>tr>td:nth-last-child {
+//  width: 160px !important;
+//  max-width: 160px !important;
+//}
+//::v-deep .v-data-table__wrapper > table > tbody > tr > th:nth-last-child {
+//  width: 160px !important;
+//  max-width: 160px !important;
+//}
+
 
 /*
 ::v-deep th[role=columnheader] > span {
