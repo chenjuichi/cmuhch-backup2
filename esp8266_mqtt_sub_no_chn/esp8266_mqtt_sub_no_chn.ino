@@ -33,9 +33,9 @@ IPAddress ip (192,168,32,178); // The remote server ip to ping
 
 //Led燈條的設定資料(global var)
 const uint8_t pin[] = {D0, D1, D2, D3, D4, D5};
-const String r = "r";
-const String g = "g";
-const String b = "b";
+//const String r = "r";
+//const String g = "g";
+//const String b = "b";
 
 //const unsigned long period = 500;
 
@@ -46,8 +46,8 @@ CRGB leds3[NUM_LEDS]; //
 CRGB leds4[NUM_LEDS]; //
 CRGB leds5[NUM_LEDS]; //
 
-CRGB RGBcolor(0, 0, 0); // RGBcolor（红色数值，绿色数值，蓝色数值）
-CRGB RGBcolor_000(0, 0, 0);
+//CRGB RGBcolor(0, 0, 0); // RGBcolor（红色数值，绿色数值，蓝色数值）
+//CRGB RGBcolor_000(0, 0, 0);
 
 // global var
 unsigned long tymNow;
@@ -208,7 +208,7 @@ void loop() {
     num2nds = (tymNow/1000);
 
     if(num2nds % 2 == 0) {  
-      Serial.println("led flash on");
+      //Serial.println("led flash on");
       for (int j = myBegin-1; j < myBegin-1 + mySegments; j++){
         leds1[j] = CRGB::Red;
         FastLED.show();
@@ -216,7 +216,7 @@ void loop() {
       }  
     }
     if(num2nds % 2 > 0) {
-      Serial.println("led flash off");
+      //Serial.println("led flash off");
       for (int j = myBegin-1; j < myBegin-1 + mySegments; j++){
         leds1[j] = CRGB::Black;
         FastLED.show();
