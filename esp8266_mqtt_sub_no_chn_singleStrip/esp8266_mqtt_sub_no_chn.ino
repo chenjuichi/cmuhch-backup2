@@ -29,7 +29,6 @@ const char* password = "-pmc4394";
 const char* mqttServer = "192.168.32.178";
 
 IPAddress ip (192,168,32,178); // The remote server ip to ping
-const char* Remote_Host = "192.168.32.178";
 // ----------
 
 //Led燈條的設定資料(global var)
@@ -37,6 +36,8 @@ const uint8_t pin[] = {D0, D1, D2, D3, D4, D5};
 //const String r = "r";
 //const String g = "g";
 //const String b = "b";
+
+//const unsigned long period = 500;
 
 //Led燈條的變數(global var)
 CRGB leds1[NUM_LEDS]; // 建立光帶leds
@@ -90,7 +91,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   StaticJsonDocument <256> doc;
   deserializeJson(doc, payload);
   const char* ledStrip_layout = doc["Layout"];  //解Layout的JSON序列化(Serialize)資料
-  const char* ledStrip_begin = doc["Begin"];    //解Begin的JSON序列化(Serialize)資料
+  const char* ledStrip_begin = doc["Begin"];      //解Begin的JSON序列化(Serialize)資料
   const char* ledStrip_end = doc["End"];        //解End的JSON序列化(Serialize)資料
   const char* ledStrip_msg = doc["Msg"];        //解Msg的JSON序列化(Serialize)資料
   //顯示json資料
@@ -202,15 +203,6 @@ void setup() {
 }
 
 void loop() {
-  
-  //if(Ping.ping(Remote_Host, 5)) {
-  //  Serial.println("Online");
-  //  //delay(1000);  
-  //} else {    
-  //  Serial.println("Offline");
-  //  //delay(1000);   
-  //}
-  
   if (ledFlash) {
     tymNow = millis();
     num2nds = (tymNow/1000);
@@ -292,98 +284,46 @@ void subscribeTopic(){
 
 //初始化燈條,輸出腳位 D1~D5 對應 leds1~leds5
 void init_led_output(){
+  //delay(2000);
+  //delay(100);
   LEDS.addLeds<LED_TYPE, D1, COLOR_ORDER>(leds1, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D2, COLOR_ORDER>(leds2, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D3, COLOR_ORDER>(leds3, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D4, COLOR_ORDER>(leds4, NUM_LEDS);
   LEDS.addLeds<LED_TYPE, D5, COLOR_ORDER>(leds5, NUM_LEDS);
+  //delay(1000);
   delay(10);
 }
 
 void strip_color_on(){
-  switch(myLayout){
-    case 1:
-       strip_section_on(leds1, stripArray1);
-       break;
-    case 2:
-       strip_section_on(leds2, stripArray2);
-       break;
-    case 3:
-       strip_section_on(leds3, stripArray3);
-       break;
-    case 4:
-       strip_section_on(leds4, stripArray4);
-       break;       
-    default:
-       strip_section_on(leds5, stripArray5);
-       break;
-  }  
-}
-
-void strip_color_off(){
-  switch(myLayout){
-    case 1:
-       strip_section_off(leds1, stripArray1);
-       break;
-    case 2:
-       strip_section_off(leds2, stripArray2);
-       break;
-    case 3:
-       strip_section_off(leds3, stripArray3);
-       break;
-    case 4:
-       strip_section_off(leds4, stripArray4);
-       break;       
-    default:
-       strip_section_off(leds5, stripArray5);
-       break;
-  }  
-}
-/*
-void copy(int* src, int* dst, int len) {
-  memcpy(dst, src, sizeof(src[0])*len);
-}
-*/
-bool pingTest(){
-  Serial.print("Pinging host : "); Serial.println(Remote_Host);
-  if(Ping.ping(Remote_Host, 2)) { // Ping the remote host with two ping requests
-    Serial.println("Success!!");
-    return true;
-  } else {
-    Serial.println("Error :(");
-    return false;
-  };
-};
-
-
-void strip_section_on(CRGB* tempLeds, int* tempArray){
   boolean myTest=false;
-  
+
+  //ledFlash = false;
   //檢查array內是否有值, true: 有
   for (int i=0; i<30; i=i+2) {
     if (myBegin-1 == stripArray1[i] && mySegments == stripArray1[i+1]) {
       myTest=true;
-      //Serial.println("on STRIP1: " +String(i)+" "+ String(stripArray1[i])+" "+String(tempArray[i+1]));        
+      Serial.println("on STRIP1: " +String(i)+" "+ String(stripArray1[i])+" "+String(stripArray1[i+1]));        
       break;
     }
   }
   
-  //Serial.println("on STRIP2: "+String(myTest));
+  Serial.println("on STRIP2: "+String(myTest));
   
   //新值加入
   if (myTest==false) {
-    //Serial.println("on STRIP3: "+String(stripIndex));
-    tempArray[stripIndex]=myBegin-1;
+    Serial.println("on STRIP3: "+String(stripIndex));
+    stripArray1[stripIndex]=myBegin-1;
     stripIndex++;
-    tempArray[stripIndex]=mySegments;
+    stripArray1[stripIndex]=mySegments;
     stripIndex++;
-    //Serial.println("on STRIP4: "+String(tempArray[stripIndex-2])+" "+String(tempArray[stripIndex-1]));
+    Serial.println("on STRIP4: "+String(stripArray1[stripIndex-2])+" "+String(stripArray1[stripIndex-1]));
   }
  
   for (int i = 0; i < 30; i=i+2) {
-    if (tempArray[i] !=0 || tempArray[i+1] !=0) {      
-      for (int j = tempArray[i]; j < tempArray[i]+tempArray[i+1]; j++){
-        tempLeds[j] = CRGB::Red;
+    if (stripArray1[i] !=0 || stripArray1[i+1] !=0) {      
+      for (int j = stripArray1[i]; j < stripArray1[i]+stripArray1[i+1]; j++){
+        leds1[j] = CRGB::Red;
         FastLED.show();
         delay (10);
       }
@@ -391,20 +331,20 @@ void strip_section_on(CRGB* tempLeds, int* tempArray){
   }
 }
 
-void strip_section_off(CRGB* tempLeds, int* tempArray){
-  
+void strip_color_off(){
+  //ledFlash = false;
   //檢查array內是否有值, true: 有
   for (int i=0; i<30; i=i+2) {
-     if (myBegin-1 == tempArray[i] && mySegments == tempArray[i+1]) {
-       //Serial.println("off STRIP11: " +String(i)+" "+ String(tempArray[i])+" "+String(tempArray[i+1]));  
-       for (int j = tempArray[i]; j < tempArray[i]+tempArray[i+1]; j++){
-         tempLeds[j] = CRGB::Black;
+     if (myBegin-1 == stripArray1[i] && mySegments == stripArray1[i+1]) {
+       Serial.println("off STRIP11: " +String(i)+" "+ String(stripArray1[i])+" "+String(stripArray1[i+1]));  
+       for (int j = stripArray1[i]; j < stripArray1[i]+stripArray1[i+1]; j++){
+         leds1[j] = CRGB::Black;
          FastLED.show();
          delay (10);
        }
-       tempArray[i]=0;   
-       tempArray[i+1]=0;
-       //Serial.println("off STRIP22: " +String(i)+" "+ String(tempArray[i])+" "+String(tempArray[i+1]));          
+       stripArray1[i]=0;   
+       stripArray1[i+1]=0;
+       Serial.println("off STRIP22: " +String(i)+" "+ String(stripArray1[i])+" "+String(stripArray1[i+1]));          
        break;
      }
   }
