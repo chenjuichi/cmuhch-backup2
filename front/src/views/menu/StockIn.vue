@@ -1,46 +1,72 @@
 <template>
   <v-app>
-  <v-container fluid>  
+  <v-container fluid>
+    <v-snackbar v-model="snackbar" :color="snackbar_color" :right='snackbar_right' :top='snackbar_top'>
+      {{ snackbar_info }}
+      <template v-slot:action="{ attrs }">
+        <v-btn icon :color="snackbar_icon_color" @click="snackbar= false">
+          <v-icon dark>mdi-close-circle</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
     <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-      <v-card class="overflow-hidden mx-auto mt-3" width="65vw">
+      <v-card class="overflow-hidden mx-auto mt-3" width="88vw">
         <v-toolbar flat color="#7DA79D" height="80" >
-          <v-row dense style="margin-bottom: -36px; margin-top: -12x;">         
-            <v-col cols="12" md="2" class="mr-1">                              
-              <v-text-field                            
+          <v-row dense style="margin-bottom: -36px; margin-top: -12x;">
+            <v-col cols="12" md="2" class="mr-1" style="position: relative; top: -15px;">
+              <!--
+              <v-text-field
                 v-model="stockInTag_reagID"
                 label="資材碼"
                 :value="stockInTag_reagID"
               ></v-text-field>
+              -->
+              <v-select
+                :items="reagentForSelect"
+                label="資材碼"
+                style="position:relative; top: 10px;"
+                dense
+                outlined
+                v-model="stockInTag_reagID"
+              ></v-select>
             </v-col>
-            <v-col cols="12" md="3" class="mr-2">                            
-              <v-text-field                            
+            <v-col cols="12" md="4" class="mr-2">
+              <v-text-field
                 v-model="stockInTag_reagName"
                 label="品名"
                 :value="stockInTag_reagName"
                 readonly
-              ></v-text-field> 
+                style="width: 370px !important; max-width: 370px !important;"
+              ></v-text-field>
             </v-col>
-            <v-col cols="12" md="2" align="right" style="display:table; margin-top:-29px">
+
+            <v-col cols="12" md="2"
+              class="mr-2"
+              style="position: relative; top: 5px; left:20px; font-weight: bold; width: 120px !important; max-width: 120px !important;">
+              {{stockInTag_station}}站/{{stockInTag_layout}}層/{{stockInTag_pos}}格
+            </v-col>
+
+            <v-col cols="12" md="1" align="right" style="position: relative; top: 5px;">
               <!--<span class="text-decoration-underline">&nbsp;&nbsp;入庫數量</span>-->
               <span class="stockinStr" style="display:table-cell; vertical-align:middle; font-weight: bold; font-size: 1em;">入庫數量</span>
             </v-col>
-            <v-col cols="12" md="2" align="left" class="pl-0 mx-1">
+            <v-col cols="12" md="2" align="left" class="pl-0 mx-1" style="max-width:120px; width=120px;">
               <vue-numeric-input v-model="stockInTag_cnt" :min="1" :max="stockInTag_max_cnt" :step="1" size="small" align="center"></vue-numeric-input>
             </v-col>
-            <v-col cols="12" md="1" align="right" class="pl-0 mx-1">            
+            <v-col cols="12" md="1" align="right" class="pl-0 mx-1" style="max-width: 70px; width=120px; text-align: center; position:relative; top:-10px;">
               <!--<img v-show="stockInTag_reagID!=''" v-on:click="redirect_to_mqtt" :src="home_url" alt="Loading" style="height: 3vw;" v-bind:alt="pic">-->
               <img v-show="stockInTag_reagID!=''" @click="redirect_to_mqtt" :src="home_url" alt="Loading" style="height: 3vw;">
             </v-col>
-              
-            <v-col cols="12" md="1" align="center" class="pl-0 mx-1">           
+
+            <v-col cols="12" md="1" align="center" class="pl-0 mx-1" style="text-align: center; position:relative; top:-12px;">
                 <v-btn v-show="isOK" @click="redirect_ok" color="success" rounded style="font-weight: bold; font-size: 0.9em;">
                   <!--<v-icon>mdi-domain</v-icon>-->完成
                 </v-btn>
             </v-col>
-          </v-row> 
+          </v-row>
         </v-toolbar>
         <v-sheet class="overflow-y-auto" max-height="600">
-          <v-container>     
+          <v-container>
             <v-list three-line>
               <v-list-item-group v-model="model" mandatory color="indigo">
                 <!--<template v-for="(item, index) in items">-->
@@ -52,7 +78,8 @@
                       <v-list-item-content>
                         <!--<v-list-item-title class="font-weight-bold" v-text="`品名:${item.stockInTag_reagName}    入庫數量: ${item.stockInTag_cnt}`"></v-list-item-title>-->
                         <v-list-item-title class="font-weight-bold">
-                          <span>品名:{{item.stockInTag_reagName}}</span>&nbsp;&nbsp;    
+                          <span>資材碼:{{item.stockInTag_reagID}}</span>&nbsp;&nbsp;
+                          <span>品名:{{item.stockInTag_reagName}}</span>&nbsp;&nbsp;
                           <span class="text-decoration-underline">入庫數量: {{item.stockInTag_cnt}}</span>
                         </v-list-item-title>
                         <v-list-item-subtitle class="mb-3" v-text="`效期:${item.stockInTag_reagPeriod}  保存溫度: ${item.stockInTag_reagTemp}  批號: ${item.stockInTag_batch}`"></v-list-item-subtitle>
@@ -64,13 +91,13 @@
                       <v-list-item-action @click="listActionClick(index, active)">
                         <!--<v-list-item-action-text v-text="item.stockInTag_batch"></v-list-item-action-text>-->
                         <!--<img v-show="active" :src="home_url" alt="Loading" style="height: 2.5vw;">-->
-                        
+
                         <v-icon v-if="!active" color="grey lighten-1">
                           mdi-star-outline
                         </v-icon>
                         <v-icon v-else color="yellow darken-3">
                           mdi-star
-                        </v-icon>                      
+                        </v-icon>
                         <div v-show="active">{{item.grid_station}}站/{{item.grid_layout}}層/{{item.grid_pos}}格</div>
                       </v-list-item-action>
                     </template>
@@ -80,13 +107,13 @@
                 </template>
               </v-list-item-group>
             </v-list>
-          </v-container> 
+          </v-container>
         </v-sheet>
       </v-card>
     </v-row>
 
     <v-row align="center" justify="space-around" v-else>
-        <v-dialog 
+        <v-dialog
           v-model="permDialog"
           transition="dialog-bottom-transition"
           max-width="500"
@@ -95,8 +122,8 @@
             <v-toolbar
               color="primary"
               dark
-            >錯誤訊息!</v-toolbar>          
-            <v-card-text> 
+            >錯誤訊息!</v-toolbar>
+            <v-card-text>
               <div class="text-h4 pa-12">使用這項功能, 請通知管理人員...</div>
             </v-card-text>
             <v-card-actions class="justify-end">
@@ -106,7 +133,7 @@
           </v-card>
         </v-dialog>
     </v-row>
-  </v-container>    
+  </v-container>
    </v-app>
 </template>
 
@@ -142,13 +169,13 @@ export default {
       localStorage.setItem('loginedUser', JSON.stringify(userData));
     };
     //
-    this.stockInTag_cnt=this.items[this.model].stockInTag_cnt;
-    this.stockInTag_max_cnt=this.items[this.model].stockInTag_cnt;
+    //this.stockInTag_cnt=this.items[this.model].stockInTag_cnt;
+    //this.stockInTag_max_cnt=this.items[this.model].stockInTag_cnt;
 
-    this.stockInTag_min_cnt=1;
-    this.stockInTag_reagID=this.items[this.model].stockInTag_reagID;
-    this.stockInTag_reagName=this.items[this.model].stockInTag_reagName;
-    this.items[this.model].active=true;
+    //this.stockInTag_min_cnt=1;
+    //this.stockInTag_reagID=this.items[this.model].stockInTag_reagID;
+    //this.stockInTag_reagName=this.items[this.model].stockInTag_reagName;
+    //this.items[this.model].active=true;
     //
   },
 
@@ -161,6 +188,13 @@ export default {
     },
     permDialog: false,
 
+    snackbar: false,
+    snackbar_color: 'success',
+    snackbar_right: true,
+    snackbar_top: true,
+    snackbar_info: '',
+    snackbar_icon_color: '#adadad',
+
     default_home_url: logo,
     home_url: logo,
     home_url_R: logoR,
@@ -169,6 +203,11 @@ export default {
 
     stockInTag_reagID: '',
     stockInTag_reagName: '',
+
+    stockInTag_station: '',
+    stockInTag_layout: '',
+    stockInTag_pos: '',
+
     stockInTag_cnt: 0,
     stockInTag_min_cnt: 0,
     stockInTag_max_cnt: 0,
@@ -177,21 +216,25 @@ export default {
     currentLedStation: 1,
     currentLedLayout: 1,
     currentLedPos: 1,
+    currentLedRange_begin: 1,
+    currentLedRange_end: 2,
 
     pagination: {
       //itemsPerPage: 10,   //預設值, rows/per page
       //page: 1,
     },
 
-
     grids: [],
+    temp_grids : [],
 
     isSort: true,   //textfield輸入資材碼
     isOK: false,    //是否顯示入庫完成的按鍵
 
     //selected: [2],
     model: 0,
+
     items: [
+      /*
       {
         //id: 1,
         stockInTag_reagID: '123456789',
@@ -374,7 +417,16 @@ export default {
         stockInTag_cnt: 10,
         active: false,
       },
+      */
     ],
+    temp_items : [],
+
+    reagentForSelect: [],
+
+    mqtt_topic:['Station1','Station2','Station3'],
+
+    load_SingleTable_ok: false, //for get employer table data
+    load_2thTable_ok: false,    //for get reagent table data
   }),
 
   computed: {
@@ -388,24 +440,37 @@ export default {
       }), 'stockInTag_reagID');
       //console.log("filter: ", temp_array)
       return temp_array;
-    },       
+    },
   },
 
   watch: {
     stockInTag_reagID (val) {
       this.fromReagIdDisp();
     },
-  },
 
-  //mounted() {
-    //this.stockInTag_cnt=this.items[this.model].stockInTag_cnt;
-    //this.stockInTag_max_cnt=this.items[this.model].stockInTag_cnt;
-    //
-    //this.stockInTag_min_cnt=1;
-    //this.stockInTag_reagID=this.items[this.model].stockInTag_reagID;
-    //this.stockInTag_reagName=this.items[this.model].stockInTag_reagName;
-    //this.items[this.model].active=true;
-  //},
+    load_2thTable_ok(val) {
+      console.log("load_2thTable_ok, products: ", val)
+
+      if (val) {
+        this.grids = Object.assign([], this.temp_grids);
+
+        this.load_2thTable_ok=false;
+
+        this.addGrids();
+      }
+    },
+
+    load_SingleTable_ok(val) {
+      console.log("load_SingleTable_ok, desserts: ", val);
+
+      if (val) {
+        this.items = Object.assign([], this.temp_items);
+        this.load_SingleTable_ok=false;
+
+        this.listStockInGrids();
+      }
+    },
+  },
 
   created () {
     this.currentUser = JSON.parse(localStorage.getItem("loginedUser"));
@@ -417,28 +482,19 @@ export default {
     this.pagination.itemsPerPage=this.currentUser.setting_items_per_page
 
     this.load_SingleTable_ok=false;
-
     this.initAxios();
 
-    this.initialize();
+    this.listStockInItems();
 
-    this.addGrids();  
+    //this.initialize();
   },
 
   methods: {
     initialize () {
       this.load_SingleTable_ok=false;
+      this.listStockInItems();
+      //this.listStockInGrids();
       /*
-      const path='/xxx';
-      axios.get(path)
-      .then((res) => {
-
-      this.load_SingleTable_ok=true;
-      })
-      .catch((error) => {
-
-      });
-      */
       this.grids = [
         {
           //id: 1,
@@ -446,7 +502,7 @@ export default {
           grid_reagName: 'ABC',
           grid_station: 1,
           grid_layout: 4,
-          grid_pos: 4,         
+          grid_pos: 4,
         },
         {
           //id: 2,
@@ -553,9 +609,78 @@ export default {
           grid_pos: 8,
         },
 
-      ];    
+      ];
+      */
     },
 
+    listStockInItems() {
+      //const path = '/listStockInData';
+      const path = '/listStockInItems';
+      console.log("listStockInItems, Axios get data...")
+      axios.get(path)
+      .then((res) => {
+        this.temp_items = res.data.outputs;
+        console.log("GET ok, total records:", res.data.outputs.length);
+
+        this.reagentForSelect = this.temp_items.map(function(p) {  //
+          return p.stockInTag_reagID;
+        });
+        this.reagentForSelect = [...new Set(this.reagentForSelect)];  //去除重複項目
+
+        this.load_SingleTable_ok=true;
+      })
+      .catch((error) => {
+        console.error(error);
+        this.load_SingleTable_ok=false;
+      });
+    },
+
+    listStockInGrids() {
+      //const path = '/listGrids';
+      const path = '/listStockInGrids';
+      console.log("listStockInGrids, Axios get data...")
+      axios.get(path)
+      .then((res) => {
+        this.temp_grids = res.data.outputs;
+        console.log("GET ok, total records:", res.data.outputs.length);
+        this.load_2thTable_ok = true;
+      })
+      .catch((error) => {
+        console.error(error);
+        this.load_2thTable_ok = false;
+      });
+    },
+
+    async mqttForStation() {
+        let path='/mqtt/station';
+        let temp_layout=this.currentLedLayout;
+        let range_begin=this.currentLedRange_begin;
+        let range_end=this.currentLedRange_end;
+
+        console.log("station: " +"layout: " + temp_layout + " pos: " + range_begin + " , " + range_end)
+        //let temp_sw= this.switchOnOff ? 'on' : 'off';
+        let temp_sw= 'flash';
+        let payload= {
+          topic: this.mqtt_topic[this.currentLedStation.parseInt() - 1],
+          layout: temp_layout,
+          pos_begin: range_begin,
+          pos_end: range_end,
+          msg: temp_sw,
+        };
+
+        try {
+          let res = await axios.post(path, payload);
+          console.log("mqtt ok", res.data.status);
+        } catch (err) {
+          console.error(err)
+          console.log("通訊錯誤!");
+          this.snackbar_color='red accent-2';
+          this.snackbar=true;
+          this.snackbar_info= '通訊錯誤!';
+          this.snackbar_icon_color= '#adadad';
+        }
+    },
+    /*
     async mqttForStationA() {
         let path='/mqtt/stationA';
         let temp_layout=this.currentLedLayout.toString();
@@ -577,14 +702,16 @@ export default {
           console.error(err)
         }
     },
-
+    */
     listActionClick(index, active) {
       console.log("list action: ", index, active);
-      
+
       this.currentIndex=index;
       this.currentLedStation=this.items[index].grid_station;
       this.currentLedLayout=this.items[index].grid_layout;
       this.currentLedPos=this.items[index].grid_pos;
+      this.currentLedRange_begin=this.items[index].range0;
+      this.currentLedRange_end=this.items[index].range1;
 
       this.isSort=false;
       if (active) {
@@ -594,6 +721,10 @@ export default {
 
         this.stockInTag_reagID='';
         this.stockInTag_reagName='';
+
+        this.stockInTag_station='';
+        this.stockInTag_layout='';
+        this.stockInTag_pos='';
       } else {
         this.stockInTag_cnt=this.items[index].stockInTag_cnt;
         this.stockInTag_max_cnt=this.items[index].stockInTag_cnt;
@@ -601,6 +732,10 @@ export default {
         this.stockInTag_min_cnt=1;
         this.stockInTag_reagID=this.items[index].stockInTag_reagID;
         this.stockInTag_reagName=this.items[index].stockInTag_reagName;
+
+        this.stockInTag_station=this.items[index].grid_station;
+        this.stockInTag_layout=this.items[index].grid_layout;
+        this.stockInTag_pos=this.items[index].grid_pos;
       }
 
       //this.items[index].active=!this.items[index].active;
@@ -616,28 +751,32 @@ export default {
       }
     },
     */
-    fromReagIdDisp() { 
-      if (this.stockInTag_reagID != '' && this.isSort) {        
-        //console.log("result 1-1...", this.items);
+    fromReagIdDisp() {
+      if (this.stockInTag_reagID != '' && this.isSort) {
+        console.log("result 1-1...", this.items);
         const objIndex = this.items.findIndex((obj => obj['active'] == true));
-        //console.log("result 1-1-1...", objIndex);
+        console.log("result 1-1-1...", objIndex);
         if (objIndex != -1)
-          this.items[objIndex].active = false;       
+          this.items[objIndex].active = false;
         const fromIndex = this.items.map(object => object.stockInTag_reagID).indexOf(this.stockInTag_reagID);
         const toIndex = 0;
-        //console.log("result 1-2...", result);
+        console.log("result 1-2...", fromIndex);
         if (fromIndex != -1) {
           const element = this.items.splice(fromIndex, 1)[0];
           this.items.splice(toIndex, 0, element);
           //console.log("result 1-2...", this.items);
           this.model=0;
           this.items[0].active = true;
-          
+
           this.stockInTag_cnt=this.items[0].stockInTag_cnt;
           this.stockInTag_max_cnt=this.items[0].stockInTag_cnt;
           this.stockInTag_min_cnt=1;
-          
+
           this.stockInTag_reagName=this.items[0].stockInTag_reagName;
+          //add
+          this.stockInTag_station=this.items[0].grid_station;
+          this.stockInTag_layout=this.items[0].grid_layout;
+          this.stockInTag_pos=this.items[0].grid_pos;
 
           this.currentIndex=0;
           this.currentLedStation=this.items[0].grid_station;
@@ -648,17 +787,21 @@ export default {
           //return copyItems;
         }
         //if (index != -1) {
-        //  console.log("result 2...", index); 
+        //  console.log("result 2...", index);
         //  this.model=index;
-        //}      
+        //}
       } else {
         this.isSort=true;
         if (this.stockInTag_reagID == '') {
           this.stockInTag_cnt=0;
           this.stockInTag_max_cnt=0;
           this.stockInTag_min_cnt=0;
-          
+
           this.stockInTag_reagName='';
+          //add
+          this.stockInTag_station='';
+          this.stockInTag_layout='';
+          this.stockInTag_pos='';
         }
       }
     },
@@ -672,6 +815,19 @@ export default {
           this.items[i].grid_pos=obj.grid_pos;
         }
       };
+
+      this.stockInTag_cnt=this.items[this.model].stockInTag_cnt;
+      this.stockInTag_max_cnt=this.items[this.model].stockInTag_cnt;
+
+      this.stockInTag_min_cnt=1;
+      this.stockInTag_reagID=this.items[this.model].stockInTag_reagID;
+      this.stockInTag_reagName=this.items[this.model].stockInTag_reagName;
+
+      this.stockInTag_station=this.items[this.model].grid_station;
+      this.stockInTag_layout=this.items[this.model].grid_layout;
+      this.stockInTag_pos=this.items[this.model].grid_pos;
+
+      this.items[this.model].active=true;
       //console.log("find: ", this.items);
     },
 
@@ -700,28 +856,33 @@ export default {
       this.home_url=this.default_home_url;
       if (this.stockInTag_cnt=this.items[this.model].stockInTag_cnt) {
         let removedEl = this.items.splice(this.model, 1); //remove object(index: this.model) from array(this.items)
-        
+
         this.model=(this.model-1>= 0) ? this.model-1 : 0;
         this.stockInTag_cnt=this.items[this.model].stockInTag_cnt;
         this.stockInTag_max_cnt=this.items[this.model].stockInTag_cnt;
         this.stockInTag_min_cnt=1;
         this.stockInTag_reagID=this.items[this.model].stockInTag_reagID;
         this.stockInTag_reagName=this.items[this.model].stockInTag_reagName;
-        this.items[this.model].active=true;        
+
+        this.stockInTag_station=this.items[this.model].grid_station;
+        this.stockInTag_layout=this.items[this.model].grid_layout;
+        this.stockInTag_pos=this.items[this.model].grid_pos;
+
+        this.items[this.model].active=true;
       } else {
         this.items[this.model].stockInTag_cnt=this.items[this.model].stockInTag_cnt - this.stockInTag_cnt;
         this.stockInTag_cnt=this.items[this.model].stockInTag_cnt;
         this.stockInTag_max_cnt=this.items[this.model].stockInTag_cnt;
       }
 
-      this.mqttForStationA();
+      this.mqttForStation();
     },
-    
+
     permCloseFun () {
       this.permDialog = false
       console.log("press permission Close Button...");
-      this.$router.push('/navbar'); 
-    },    
+      this.$router.push('/navbar');
+    },
   },
 }
 </script>
@@ -758,10 +919,10 @@ span.stockinStr {
 }
 
 .v-card.on-hover.theme--dark {
-  background-color: rgba(255, 255, 255, 0.8);  
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .v-card.on-hover.theme--dark > .v-card__text {
-    color: #000;      
+    color: #000;
 }
 </style>

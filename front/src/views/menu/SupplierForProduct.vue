@@ -154,8 +154,8 @@ export default {
     //資料表頭
     headers: [
       //{ text: 'ID', sortable: false, value: 'id', width: '10%', align: 'start'},
-      {text: '產品類別', sortable: true, value: 'prd_name', width: '300px', align: 'center'},
-      {text: 'Actions', sortable: false, value: 'actions', width: '110px'},
+      {text: '產品類別', sortable: true, value: 'prd_name', width: '80%', align: 'center'},
+      {text: 'Actions', sortable: false, value: 'actions', width: '20%'},
     ],
     desserts: [],
     temp_desserts: [],
@@ -453,12 +453,13 @@ small.msgErr {
 ::v-deep .style-1 td {
   padding-left: 8px !important;
   padding-right: 0px !important;
+  text-align: start !important;
 }
 
 ::v-deep .v-data-table > .v-data-table__wrapper > table > thead > tr > th {
   padding-left: 8px !important;
   padding-right: 0px !important;
-  text-align: center !important;
+  text-align: start !important;
 }
 
 ::v-deep .v-data-table > .v-data-table__wrapper > table > thead > tr > th:nth-last-child(1) {

@@ -1,6 +1,6 @@
 <template>
 <v-app>
-  
+
     <v-row justify="center">
       <v-dialog v-model="dialog" persistent max-width="600px">
         <v-card>
@@ -17,24 +17,24 @@
                     required
                     prepend-icon="mdi-lock"
                     :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                    :type="showPassword ? 'text' : 'password'"                      
+                    :type="showPassword ? 'text' : 'password'"
                     class="mb-6 text-teal"
                     @click:append="showPassword = !showPassword"
                   ></v-text-field>
                   <!-- {{ ErrMsg }} -->
-                  <small class='errormsg' v-text= "passwordErrMsg"></small>  
+                  <small class='errormsg' v-text= "passwordErrMsg"></small>
                 </v-col>
                 <v-col cols="12" md="6" align="center" style="margin-top: 35px">
-                  <v-progress-linear                    
+                  <v-progress-linear
                     :color="score.color"
-                    :value="score.value"                    
+                    :value="score.value"
                   ></v-progress-linear>
                 </v-col>
                 <v-col cols="12">
                   <v-text-field
                     label="確認密碼*"
                     v-model="confirmPpassword"
-                    :type="showPassword ? 'text' : 'password'"                      
+                    :type="showPassword ? 'text' : 'password'"
                     required
                     prepend-icon="mdi-account-check"
                     :rules="[passwordConfirmationRule]"
@@ -47,11 +47,11 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="blue darken-1" text @click="dialog = false">取消</v-btn>
-            <v-btn color="blue darken-1" text @click="save">儲存</v-btn>
+            <v-btn color="blue darken-1" text @click="save" :disabled='checkDataForSaveButton'>確定</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
-    </v-row>  
+    </v-row>
 </v-app>
 </template>
 
@@ -76,7 +76,7 @@ export default {
 
     score() {
       const result = zxcvbn(this.newPassword);
-      
+
       switch (result.score) {
         case 4:
           return {
@@ -103,9 +103,18 @@ export default {
             color: "red",
             value: 0
           };
-      }    
+      }
     },
-  },  
+
+    checkDataForSaveButton() {
+      if (!!this.newPassword && !!this.confirmPpassword &&
+          this.passwordErrMsg == '') {
+        return false;
+      } else {
+        return true
+      }
+    },
+  },
 
   props: ['dialog_data'],
 
@@ -115,7 +124,7 @@ export default {
        this.dialog=true;
       }
     },
-    
+
     newPassword(val) {
       let isPasswordRule = /^(?=.*\d)(?=.*[a-z])[0-9a-zA-Z]{8,12}$/;
 
@@ -125,18 +134,18 @@ export default {
 
       if (result != -1) {
         this.changeOK=true;
-        this.passwordErrMsg = '';        
+        this.passwordErrMsg = '';
       } else {
         this.changeOK=false;
-        this.passwordErrMsg = '資料格式或資料長度錯誤!';        
+        this.passwordErrMsg = '資料格式或資料長度錯誤!';
       }
     },
-  }, 
+  },
 
   created() {
- 
+
   },
-  
+
   mounted() {
 
   },
@@ -182,15 +191,15 @@ export default {
       .then(res => {
         console.log("update password is ok!", res.data.status)
         //if (this.newPassword == this.confirmPpassword && this.changeOK && res.data.status)
-        //  this.$emit('changePassword', this.newPassword);    
+        //  this.$emit('changePassword', this.newPassword);
       })
       .catch(err => {
         console.error(err);
-      });      
+      });
     },
   },
 }
-</script> 
+</script>
 
 <style scoped lang="scss">
 /*
@@ -202,11 +211,10 @@ export default {
 small.errormsg {
   font-size: 80%;
   color: red;
-  
+
   position: relative;
   top: -35px;
   left: 35px;
 
 }
 </style>
- 

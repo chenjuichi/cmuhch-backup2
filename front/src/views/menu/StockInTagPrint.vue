@@ -197,6 +197,8 @@ export default {
       if (val) {
         //this.desserts = Object.assign([], this.temp_desserts);
         this.desserts =  JSON.parse(JSON.stringify(this.temp_desserts));
+
+        this.load_SingleTable_ok=false;
       }
     },
 

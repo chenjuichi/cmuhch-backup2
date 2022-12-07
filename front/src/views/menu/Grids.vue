@@ -2,7 +2,7 @@
 <v-app>
   <v-container fluid>
     <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-      <v-card width="55vw" class="pa-md-4  mt-5 mx-lg-auto">
+      <v-card width="72vw" class="pa-md-4  mt-5 mx-lg-auto">
         <v-data-table
           :headers="headers"
           :items="desserts"
@@ -31,29 +31,37 @@
                     <v-container>
                       <!-- 第1列-->
                       <v-row>
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="3">
                           <v-tooltip v-model="errorShow" top color="error">
                             <template v-slot:activator="{ on, attrs }">
+                              <!--
                               <v-text-field
                                 v-model="editedItem.grid_reagID"
                                 label="資材碼"
                                 prepend-icon="mdi-alphabetical"
                               ></v-text-field>
+                              -->
+                              <v-select
+                                :items="reagentForSelect"
+                                label="資材碼"
+                                style="position:relative; top: 10px;"
+                                dense
+                                outlined
+                                v-model="editedItem.grid_reagID"
+                              ></v-select>
                             </template>
                             <span>資材碼錯誤或放置位置重複!</span>
                           </v-tooltip>
                         </v-col>
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="9">
                           <v-text-field
                             v-model="editedItem.grid_reagName"
                             :value="fromReagIdDisp"
                             label="品名"
-                            prepend-icon="mdi-hospital-box-outline"
                             readonly
                           ></v-text-field>
                         </v-col>
                       </v-row>
-
                       <!-- 第2列-->
                       <v-row>
                         <v-col cols="12" md="4">
@@ -65,7 +73,7 @@
                           <vue-numeric-input  v-model="editedItem.grid_layout" :min="1" :max="5" :step="1"></vue-numeric-input>
                         </v-col>
                         <v-col cols="12" md="4">
-                          <div style="color: #007bff; font-weight: 800;">格位別</div>
+                          <div style="color: #007bff; font-weight: 800;">格位編號</div>
                           <vue-numeric-input  v-model="editedItem.grid_pos" :min="1" :max="10" :step="1"></vue-numeric-input>
                         </v-col>
                       </v-row>
@@ -188,9 +196,9 @@ export default {
       //{ text: 'ID', sortable: false, value: 'id', width: '10%', align: 'start'},
       { text: '資材碼', sortable: true, value: 'grid_reagID', width: '10%' },
       { text: '品名', sortable: false, value: 'grid_reagName', width: '10%' },
-      { text: '站別', sortable: true, value: 'grid_station', width: '10%' },
-      { text: '層別', sortable: false, value: 'grid_layout', width: '10%' },
-      { text: '格位別', sortable: false, value: 'grid_pos', width: '10%' },
+      { text: '站別', sortable: true, value: 'grid_station', width: '20%' },
+      { text: '層別', sortable: false, value: 'grid_layout', width: '20%' },
+      { text: '格位編號', sortable: false, value: 'grid_pos', width: '30%' },
       { text: 'Actions', sortable: false, value: 'actions', width: '10%' },
     ],
 
@@ -272,6 +280,8 @@ export default {
 
     desserts: [],
     temp_desserts: [],
+
+    reagentForSelect: [],
 
     editedIndex: -1,
     editedItem: {
@@ -406,6 +416,12 @@ export default {
           }
           this.temp_reagent_Desserts.push(temp_obj);
         }
+
+        this.reagentForSelect = this.temp_reagent_Desserts.map(function(p) {  //
+          return p.reag_id;
+        });
+        this.reagentForSelect = [...new Set(this.reagentForSelect)];  //去除重複項目
+
         this.load_2thTable_ok=true;
       })
       .catch((error) => {

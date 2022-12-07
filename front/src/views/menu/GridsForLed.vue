@@ -656,8 +656,8 @@ export default {
         //let temp_pos=this.currentLedPos.toString();
         //console.log("stationA:" + ' ' + this.currentIndex + " layout: " + temp_layout + " pos: " + temp_pos)
         console.log("station: " +"layout: " + temp_layout + " pos: " + range_begin + " , " + range_end)
-        //let temp_sw= this.switchOnOff ? 'on' : 'off';
-        let temp_sw= 'flash';
+        let temp_sw= this.switchOnOff ? 'on' : 'off';
+        //let temp_sw= 'flash';
         let payload= {
           topic: this.mqtt_topic[this.tab_index],
           layout: temp_layout,

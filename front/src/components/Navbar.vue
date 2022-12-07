@@ -144,18 +144,30 @@ export default {
     ChangePassword,
   },
 
-computed: {
-  inlineStyle () {
-    return {
-      backgroundImage: `url(`+ this.main_pic_url +`)`,
-      position: `fixed`,
-      height: `100vh`,
-      width: `100vw`,
-      top: `16vh`,
-      //backgroundPosition: `center`
+  computed: {
+    inlineStyle () {
+      return {
+        backgroundImage: `url(`+ this.main_pic_url +`)`,
+        position: `fixed`,
+        height: `100vh`,
+        width: `100vw`,
+        top: `16vh`,
+        //backgroundPosition: `center`
+      }
     }
-  }
-},
+  },
+
+  watch: {
+    load_SingleTable_ok(val) {
+      if (val) {
+        this.count = this.temp_count;
+        this.navBar_in_drafTags = this.temp_count;
+        console.log("navbar, totalTags: ", this.navBar_in_drafTags);
+
+        this.load_SingleTable_ok=false;
+      }
+    },
+  },
 
   created() {
     //disabled browser's back key
@@ -169,20 +181,23 @@ computed: {
     this.currentUser = JSON.parse(localStorage.getItem("loginedUser"));
     console.log("current user:",this.currentUser);
 
+    this.load_SingleTable_ok=false;
     this.initAxios();
 
+    this.listStockInTagPrintCount();
   },
 
   mounted() {
     //this.navBar_in_drafTags=this.$route.params.in_drafTags;
     //if (typeof(this.navBar_in_drafTags) === 'undefined') {
     //  this.navBar_in_drafTags=0;
+    /* 2022-12-7, remove
     let temp=localStorage.getItem("totalTags")
     if(typeof(temp)=='undefined' || temp==null)
         this.navBar_in_drafTags=0;
     else
       this.navBar_in_drafTags=parseInt(temp);
-
+    */
     //if ("totalTags" in localStorage) {
     //  this.navBar_in_drafTags=localStorage.getItem("totalTags")
       //console.log("router undefine!")
@@ -190,7 +205,7 @@ computed: {
     //  this.navBar_in_drafTags=0;
     //  localStorage.setItem("totalTags", 0);
     //}
-    console.log("navbar, totalTags: ", this.navBar_in_drafTags);
+    //2022-12-7, remove, console.log("navbar, totalTags: ", this.navBar_in_drafTags);
     //this.navBar_in_drafTags=2;
 
     //====
@@ -231,7 +246,7 @@ computed: {
       open: false,
       navBar_in_drafTags: 0,
 
-      navBar_newTags: 0,
+      //navBar_newTags: 0,
 
       subMenu: false,
       isDropdown1Visible: false,
@@ -270,10 +285,31 @@ computed: {
           icon3: "upc-scan", name3: "盤點作業", router3: "/invent",
         },
       ],
+
+      count: 0,
+      temp_count: 0,
+
+      load_SingleTable_ok: false, //for get stockin table data
     };
   },
 
   methods: {
+    listStockInTagPrintCount() {
+      const path = '/listStockInTagPrintCount';
+      console.log("listStockInTagPrintCount, Axios get data...")
+      axios.get(path)
+      .then((res) => {
+        this.temp_count = res.data.outputs;
+        console.log("GET ok, total records:", res.data.outputs.length);
+        this.load_SingleTable_ok=true;
+      })
+      .catch((error) => {
+        console.error(error);
+        this.load_SingleTable_ok=false;
+      });
+
+    },
+
     changePassword() {
       this.openDialog=true;
     },

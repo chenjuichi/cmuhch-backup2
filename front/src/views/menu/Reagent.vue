@@ -535,7 +535,7 @@ export default {
         let temp_reagents = this.temp_desserts.map(function(p) {  //
           return p.reag_catalog;
         });
-        this.reagents = [...new Set(temp_reagents)];
+        this.reagents = [...new Set(temp_reagents)];  //去除重複項目
         //let obj= {reag_catalog: '其他',}
         this.reagents.push('其他');
 

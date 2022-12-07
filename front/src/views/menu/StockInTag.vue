@@ -553,8 +553,12 @@ export default {
     },
 
     load_SingleTable_ok(val) {
+      console.log("load_SingleTable_ok, desserts: ", val);
+
       if (val) {
         this.desserts = Object.assign([], this.temp_desserts);
+
+        this.load_SingleTable_ok=false;
       }
     }
   },

@@ -13,7 +13,6 @@
     <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
       <v-card width="100vw" class="pa-md-4 mt-5 mx-lg-auto">
         <v-data-table
-
           dense
           :headers="headers"
           :items="dessertsDisplay"
@@ -22,7 +21,7 @@
           :search="search"
           :custom-filter="filterOnlyCapsText"
           :options.sync="pagination"
-          :item-class="setRowStyle"
+          :item-class="setRowBackground"
           :footer-props="{itemsPerPageText: '每頁的資料筆數'}"
         >
           <template v-slot:top>
@@ -939,8 +938,9 @@ export default {
     //*
     //* },
 
-    setRowStyle(item) {
-      return 'style-1';
+    setRowBackground(item) {
+      //return 'style-1';
+      //return item.protein > 4.2 ? 'style-1' : ''
     },
 
     //getGrid(item) {
@@ -1222,7 +1222,8 @@ div.v-toolbar__title {
   height: 40px !important;
 }
 
-::v-deep .style-1 td {
+//::v-deep .style-1 td {
+::v-deep tbody > tr td {
   overflow: hidden !important;
   max-height: 28px !important;
   line-height: 16px !important;
@@ -1409,5 +1410,12 @@ div.v-toolbar__title {
 
 .hover-side {
     transform: rotateX(90deg) translateZ(20px);
+}
+
+.style-1 {
+  background-color: rgb(215,215,44)
+}
+.style-2 {
+  background-color: rgb(114,114,67)
 }
 </style>

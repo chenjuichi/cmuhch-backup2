@@ -217,6 +217,37 @@ def list_grids():
     })
 
 
+# list grid table all data for 入庫
+@listTable.route("/listStockInGrids", methods=['GET'])
+def list_stockin_grids():
+    print("listStockInGrids....")
+    s = Session()
+    _results = []
+    _objects = s.query(Grid).all()
+
+    for grid in _objects:
+        # if (grid.isRemoved):
+        for reagent in grid._reagents_on_grid:
+            _obj = {
+                'grid_reagID': reagent.reag_id,
+                'grid_reagName': reagent.reag_name,
+                'grid_station': grid.station,
+                'grid_layout': grid.layout,
+                'grid_pos': grid.pos,
+                'id': grid.id,
+                'seg_id': grid.seg_id,
+                'range0': grid.range0,
+                'range1': grid.range1,
+            }
+            _results.append(_obj)
+
+    s.close()
+    return jsonify({
+        'status': 'success',
+        'outputs': _results
+    })
+
+
 # list grid table for Led
 @listTable.route("/listGridsForLed", methods=['GET'])
 def list_grids_for_led():
@@ -353,6 +384,51 @@ def list_stockin_data():
     })
 
 
+# list inStock table all data(isPrint) for 入庫
+@listTable.route("/listStockInItems", methods=['GET'])
+def list_stockin_items():
+    print("listStockInItems....")
+    s = Session()
+    _results = []
+    _objects = s.query(InTag).all()
+
+    for intag in _objects:
+        if (intag.isRemoved and intag.isPrinted):  # 資料存在, 而且已經貼標籤
+            user = s.query(User).filter_by(id=intag.user_id).first()
+            reagent = s.query(Reagent).filter_by(id=intag.reagent_id).first()
+
+            k1 = ''
+            if reagent.reag_temp == 0:  # 0:室溫、1:2~8度C、2:-20度C
+                k1 = '室溫'
+            if reagent.reag_temp == 1:
+                k1 = '2~8度C'
+            if reagent.reag_temp == 2:
+                k1 = '-20度C'
+
+            _obj = {
+                'id': intag.id,
+                'stockInTag_reagID': reagent.reag_id,
+                'stockInTag_reagName': reagent.reag_name,
+                'stockInTag_reagPeriod': reagent.reag_period,
+                'stockInTag_reagTemp': k1,
+                'stockInTag_Date': intag.intag_date,  # 入庫日期
+                'stockInTag_EmpID': user.emp_id,
+                'stockInTag_Employer': user.emp_name,
+                'stockInTag_batch': intag.batch,
+                'stockInTag_cnt': intag.count,
+
+                'active': False,
+            }
+
+            _results.append(_obj)
+
+    s.close()
+    return jsonify({
+        'status': 'success',
+        'outputs': _results
+    })
+
+
 # list inStock_tagPrint table all data
 @listTable.route("/listStockInTagPrintData", methods=['GET'])
 def list_stockin_tag_print_data():
@@ -397,6 +473,26 @@ def list_stockin_tag_print_data():
     return jsonify({
         'status': 'success',
         'outputs': _results
+    })
+
+
+# list inStock_tagPrint table all data
+@listTable.route("/listStockInTagPrintCount", methods=['GET'])
+def list_stockin_tag_print_count():
+    print("listStockInTagPrintCount....")
+    s = Session()
+
+    temp_count = 0
+    _objects = s.query(InTag).all()
+    # grids = [u.__dict__ for u in _objects]
+    for intag_print in _objects:
+        if (intag_print.isRemoved and intag_print.isPrinted and (not intag_print.isStockin)):
+          temp_count = temp_count + 1
+
+    s.close()
+    return jsonify({
+        'status': 'success',
+        'outputs': temp_count,
     })
 
 
@@ -448,7 +544,7 @@ def list_requirements_data():
     s = Session()
     _results = []
 
-    #_products = s.query(Product).all()
+    # _products = s.query(Product).all()
 
     _objects = s.query(OutTag).all()
     # grids = [u.__dict__ for u in _objects]
@@ -564,7 +660,7 @@ def list_inventorys():
         if (intag.isRemoved and intag.isPrinted and intag.isStockin):
             _user = s.query(User).filter_by(id=intag.user_id).first()
             _reagent = s.query(Reagent).filter_by(id=intag.reagent_id).first()
-            #_supplier = s.query(Supplier).filter_by(id=_reagent.super_id).first()
+            # _supplier = s.query(Supplier).filter_by(id=_reagent.super_id).first()
             _grid = s.query(Grid).filter_by(id=intag.grid_id).first()
 
             k1 = ''
