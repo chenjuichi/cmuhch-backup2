@@ -423,7 +423,7 @@ export default {
 
     reagentForSelect: [],
 
-    mqtt_topic:['Station1','Station2','Station3'],
+    mqtt_topic:['station1','station2','station3'],
 
     load_SingleTable_ok: false, //for get employer table data
     load_2thTable_ok: false,    //for get reagent table data

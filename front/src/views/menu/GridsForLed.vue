@@ -288,7 +288,7 @@ export default {
       switchOnOff: false,
       sw_on_str: '亮燈',
       sw_off_str: '熄燈',
-      mqtt_topic:['Station1','Station2','Station3',],
+      mqtt_topic:['station1','station2','station3',],
       load_SingleTable_ok: false, //for get grids table data
     }
   },

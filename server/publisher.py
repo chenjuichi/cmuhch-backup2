@@ -11,4 +11,4 @@ client = mqtt.Client()
 client.connect("127.0.0.1", 1883)
 
 # 發布訊息至 hello/world 主題
-client.publish("Station1/Layout1/Led1", "off")
+client.publish("station1/Layout1/Led1", "off")

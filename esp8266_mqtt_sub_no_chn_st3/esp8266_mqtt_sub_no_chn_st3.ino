@@ -22,14 +22,16 @@ static const uint8_t D5 = 14;
 #define COLOR_ORDER GRB // RGB LED 燈珠排列順序
 // ----------
 
-
 //wifi的設定資料(global var)
-const char* ssid = "ZH";
-const char* password = "-pmc4394";
-const char* mqttServer = "192.168.32.178";
+//const char* ssid = "ZH";
+//const char* password = "-pmc4394";
+//const char* mqttServer = "192.168.32.178";
+const char* ssid = "HACD7797";
+const char* password = "77974590pmc";
+const char* mqttServer = "192.168.50.203";
 
-IPAddress ip (192,168,32,178); // The remote server ip to ping
-const char* Remote_Host = "192.168.32.178";
+//IPAddress ip (192,168,32,178); // The remote server ip to ping
+//const char* Remote_Host = "192.168.32.178";
 // ----------
 
 //Led燈條的設定資料(global var)
@@ -156,9 +158,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   str_msg= String(ledStrip_msg);
   if (str_msg.equals("on")) {           // 如果收到的訊息為"on"
     //digitalWrite(LED, LOW);           // 點亮LED
-    //Serial.println("Station1/Layout1/Led5 LED ON");
+    //Serial.println("station3/Layout1/Led5 LED ON");
     ledFlash = false;
-    String strLed(" Station1/");        // 初始化字串
+    String strLed(" station3/");        // 初始化字串
     strLed = strLed + ledStrip_layout+"/" + ledStrip_begin + "/" + ledStrip_end + " LED_ON";
     
     Serial.println(strLed);
@@ -167,16 +169,16 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     strip_color_on(); //power on指定燈條位置    
   } else if (str_msg.equals("off")){    // 如果收到的訊息為"off"                            
     //digitalWrite(LED, HIGH);          // 點滅LED
-    //Serial.println("Station1/Layout1/Led5 LED OFF");
+    //Serial.println("station3/Layout1/Led5 LED OFF");
     ledFlash = false;
-    String strLed(" Station1/");        // 初始化字串
+    String strLed(" station3/");        // 初始化字串
     strLed = strLed + ledStrip_layout + "/" + ledStrip_begin + "/" + ledStrip_end + " LED_OFF";
     Serial.println(strLed);
     led_status =" LedOff";
 
     strip_color_off();  //power off指定燈條位置 
   } else if  (str_msg.equals("flash")){
-    String strLed(" Station1/");        // 初始化字串
+    String strLed(" station3/");        // 初始化字串
     strLed = strLed + ledStrip_layout + "/" + ledStrip_begin + "/" + ledStrip_end + " LED_FLASH";
     Serial.println(strLed);
     led_status =" LedFlash";
@@ -277,7 +279,7 @@ void connectMQTTserver(){
 
 // 訂閱指定主题
 void subscribeTopic(){ 
-  String topicString = "Station1";
+  String topicString = "station3";
   char subTopic[topicString.length() + 1];  
   strcpy(subTopic, topicString.c_str());
   

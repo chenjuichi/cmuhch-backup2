@@ -22,14 +22,16 @@ static const uint8_t D5 = 14;
 #define COLOR_ORDER GRB // RGB LED 燈珠排列順序
 // ----------
 
-
 //wifi的設定資料(global var)
-const char* ssid = "ZH";
-const char* password = "-pmc4394";
-const char* mqttServer = "192.168.32.178";
+//const char* ssid = "ZH";
+//const char* password = "-pmc4394";
+//const char* mqttServer = "192.168.32.178";
+const char* ssid = "HACD7797";
+const char* password = "77974590pmc";
+const char* mqttServer = "192.168.50.203";
 
-IPAddress ip (192,168,32,178); // The remote server ip to ping
-const char* Remote_Host = "192.168.32.178";
+//IPAddress ip (192,168,32,178); // The remote server ip to ping
+//const char* Remote_Host = "192.168.32.178";
 // ----------
 
 //Led燈條的設定資料(global var)

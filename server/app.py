@@ -38,6 +38,7 @@ print("system Lan ip:" + host_ip_for_lan, ", and wifi ip:" + host_ip_for_wifi)
 # --------------------------
 
 host_ip = '192.168.0.14'    # for home #//////2/2-
+# host_ip = '192.168.50.203'    # for cmuhch #//////2/2-
 # host_ip = '192.168.32.178'  # for zh  #//////2/2-
 # host_ip = '192.168.43.117'  # for mobile  #//////2/2-
 # host_ip = '172.29.112.1'  # for cuhc
@@ -141,7 +142,9 @@ def mqtt_station():
     myPosEnd = str(request_data['pos_end'])
     myMsg = request_data['msg']
 
-    print("hello /mqtt/station1: " + myTopic)
+    myReturnMsg = myTopic + ' success'
+
+    print("hello /mqtt/station: " + myTopic)
     print("message: "+myTopic+' '+myLayout +
           ' '+myPosBegin+' '+myPosEnd+' '+myMsg)
 
@@ -152,7 +155,7 @@ def mqtt_station():
     mqtt_client.publish(myTopic, MQTT_MSG)
 
     return jsonify({
-        'status': 'station1 success',
+        'status': myReturnMsg,
     })
 
 # --------------------------

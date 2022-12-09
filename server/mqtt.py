@@ -35,7 +35,10 @@ client.on_message = on_message
 #client.username_pw_set("myuser", "mypassword")
 
 # 連線至 MQTT 伺服器（伺服器位址,連接埠）
-client.connect("192.168.43.117", 1883)
+client.connect("192.168.0.14", 1883)    # for home
+#client.connect("192.168.50.203", 1883)  # for cmuhch
+#client.connect("192.168.32.178", 1883)  # for zh
+#client.connect("192.168.43.117", 1883)  # for mobile
 
 # 進入無窮處理迴圈
 client.loop_forever()
