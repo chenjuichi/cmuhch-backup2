@@ -276,7 +276,7 @@ export default {
           text: "出庫管理",
           icon1: "bookmark-dash", name1: "出庫標籤資料", router1: "/outTag",
           icon2: "bag-dash", name2: "出庫標籤列印", router2: "/outTagPrint",
-          icon3: "cart-dash", name3: "出庫作業", router3: "/app3",
+          icon3: "cart-dash", name3: "出庫作業", router3: "/stockOut",
         },
         { id: 4,
           text: "物料盤點",

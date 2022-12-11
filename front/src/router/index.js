@@ -22,6 +22,7 @@ import StockInTagPrint from '../views/menu/StockInTagPrint.vue'
 import StockIn from '../views/menu/StockIn.vue'
 import StockOutTag from '../views/menu/StockOutTag.vue'
 import StockOutTagPrint from '../views/menu/StockOutTagPrint.vue'
+import StockOut from '../views/menu/StockOut.vue'
 //import BarCode from '../components/BarCode.vue'
 import ReqRecord from '../views/menu/ReqRecord.vue'
 import StockRecord from '../views/menu/StockRecord.vue'
@@ -48,9 +49,9 @@ const routes = [
   { path: '/inTagPrint',   name: 'StockInTagPrint', component: StockInTagPrint},
   { path: '/outTag', name: 'StockOutTag', component: StockOutTag},
   { path: '/outTagPrint',   name: 'StockOutTagPrint', component: StockOutTagPrint},
+  { path: '/stockOut', name: 'StockOut', component: StockOut},
   { path: '/app1', name: 'App1', component: App1},
   { path: '/app2', name: 'App2', component: App2},
-  { path: '/app3', name: 'App3', component: App3},
   { path: '/app4', name: 'App4', component: App4},
   { path: '/navbar', name: 'Navbar', component: Navbar},
   { path: '/reqRec', name: 'ReqRecord', component: ReqRecord},
@@ -67,12 +68,21 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  //const isRedirected = from.name === 'Navbar';
+
+
   let isAuthenticated=localStorage.getItem('Authenticated');
   if (isAuthenticated == null) {
     isAuthenticated=false;
     localStorage.setItem('Authenticated', isAuthenticated);
   }
-  console.log("routing is:", to.name, isAuthenticated);
+  console.log("routing is(to, from, auth):", to.name, from.name, isAuthenticated);
+
+  //if (from.name === 'Navbar' && to.name === 'Login' ) {
+//    next()
+//  } else {
+    //next({ name: 'Navbar' })
+  //}
 
   if (to.name !== 'Login' && !isAuthenticated) {
     next({ name: 'Login'});

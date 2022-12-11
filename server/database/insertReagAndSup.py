@@ -63,70 +63,74 @@ su1 = Supplier(
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su1)
+
 su2 = Supplier(
     super_id=super_id[1],
     super_name=super_name[1],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su2)
+
 su3 = Supplier(
     super_id=super_id[2],
     super_name=super_name[2],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su3)
+
 su4 = Supplier(
     super_id=super_id[3],
     super_name=super_name[3],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su4)
+
 su5 = Supplier(
     super_id=super_id[4],
     super_name=super_name[4],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su5)
+
 su6 = Supplier(
     super_id=super_id[5],
     super_name=super_name[5],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su6)
+
 su7 = Supplier(
     super_id=super_id[6],
     super_name=super_name[6],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su7)
+
 su8 = Supplier(
     super_id=super_id[7],
     super_name=super_name[7],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su8)
+
 su9 = Supplier(
     super_id=super_id[8],
     super_name=super_name[8],
     super_address=faker.address(),
     super_connector=faker.name(),
     super_tel=faker.numerify("0#-########"))
+s.add(su9)
 
-s.add_all([su1, su2, su3, su4, su5, su6, su7, su8, su9])
-'''
-S_objects = []
-for i in range(4):
-    u = Supplier(
-        super_id=super_id[i],
-        super_name=super_name[i],
-        super_address=faker.address(),
-        super_connector=faker.name(),
-        # super_tel=faker.phoneNumber().phoneNumber([2-4]0  # -####-####),
-        super_tel=faker.numerify("0#-########"),
-    )
-    S_objects.append(u)
-s.bulk_save_objects(S_objects)
-'''
+#s.add_all([su1, su2, su3, su4, su5, su6, su7, su8, su9])
+
 try:
     s.commit()
 except pymysql.err.IntegrityError as e:
@@ -161,12 +165,8 @@ except Exception as e:
 
 # 供應商資料
 records = s.query(Supplier).all()
-'''
-records[0].product_supplier_id = [p1, p2, p4, p6, p8]
-records[1].product_supplier_id = [p1, p2, p3, p7]
-records[2].product_supplier_id = [p4, p5, p10]
-records[3].product_supplier_id = [p6, p7, p8, p9]
-'''
+#print("total suppliers: ", records)
+
 # 將供應商與產品類別做連結
 arrays = [p1, p2, p4, p6, p8]
 for array in arrays:
@@ -260,14 +260,14 @@ reag_scale = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
               1, 1, 1, 1, 1,
               1,
               ]
-reag_period = ['111/10/31', '111/12/31',  '111/12/31',
-               '112/6/30',  '111/8/31',   '111/8/31',
-               '111/8/31',  '111/8/31',   '111/8/31',
-               '111/8/31',  '111/8/31', '111/8/31',
-               '111/8/31',  '111/8/31',
-               '112/6/30', '111/12/31', '111/12/31', '111/12/31', '111/12/31',
-               '112/6/30', '111/12/31', '111/12/31', '111/12/31', '111/12/31',
-               '112/12/31', '111/12/31', '111/12/31', '112/6/30', '112/6/30',
+reag_period = ['112/10/31', '112/12/31', '112/12/31',
+               '112/6/30',  '112/8/31', '112/8/31',
+               '112/8/31',  '112/8/31', '112/8/31',
+               '112/01/10',  '112/01/10', '112/01/10',
+               '112/01/10',  '112/01/10',
+               '112/6/30', '112/12/31', '112/12/31', '112/12/31', '112/12/31',
+               '112/6/30', '112/12/31', '112/12/31', '112/12/31', '112/12/31',
+               '112/12/31', '112/12/31', '112/12/31', '112/6/30', '112/6/30',
                '112/12/31', '111/12/31', '111/12/31', '111/12/31', '111/12/31',
                '111/12/31',
                ]

@@ -3,19 +3,21 @@
   <v-sheet class="overflow-hidden" style="position: relative;">
     <v-container fluid>
       <v-row align="center" justify="center" v-if="currentUser.perm >= 1">
-        <v-card width="85vw">
+        <v-card width="90vw">
           <v-data-table
             v-model="selected"
             :headers="headers"
             :items="desserts"
+            :item-class="setRowStyle"
             :single-select="singleSelect"
-            item-key="stockInTag_reagID"
+            item-key="stockOutTag_reagID"
             show-select
-            class="elevation-1"        
+
+            :options.sync="pagination"
             :footer-props="{itemsPerPageText: '每頁的資料筆數'}"
           >
           <template v-slot:top>
-            <v-toolbar flat>              
+            <v-toolbar flat>
               <v-toolbar-title style="height: 40px;">出庫標籤列印作業</v-toolbar-title>
               <v-divider class="mx-4" inset vertical></v-divider>
               <v-spacer></v-spacer>
@@ -23,26 +25,33 @@
                 <v-icon left dark>mdi-printer</v-icon>
                 預覽標籤
               </v-btn>
-            </v-toolbar>     
-            <v-switch 
-              v-model="singleSelect" 
-              label="個別選項" 
+            </v-toolbar>
+            <!--bug, 待解決
+            <v-switch
+              v-model="singleSelect"
+              label="個別選項"
               style="height: 40px; margin-top:0px; padding-top:0px;"
             ></v-switch>
+            -->
           </template>
-          <template v-slot:[`item.stockInTag_cnt`]="{ item }">
+          <template v-slot:[`item.stockOutTag_cnt`]="{ item }">
             <v-text-field
-              v-model="item.stockInTag_cnt"
-              name="count"            
-              @input="getdata(item)"         
+              v-model="item.stockOutTag_cnt"
+
+              type="number"
+              min=1
+              max=20
+              oninput="if(Number(this.value) > Number(this.max)) this.value = this.max;"
+
+              @input="getdata(item)"
             ></v-text-field>
-          </template>       
+          </template>
           </v-data-table>
         </v-card>
       </v-row>
 
       <v-row align="center" justify="space-around" v-else>
-          <v-dialog 
+          <v-dialog
             v-model="permDialog"
             transition="dialog-bottom-transition"
             max-width="500"
@@ -51,8 +60,8 @@
               <v-toolbar
                 color="primary"
                 dark
-              >錯誤訊息!</v-toolbar>          
-              <v-card-text> 
+              >錯誤訊息!</v-toolbar>
+              <v-card-text>
                 <div class="text-h4 pa-12">使用這項功能, 請通知管理人員...</div>
               </v-card-text>
               <v-card-actions class="justify-end">
@@ -61,7 +70,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-      </v-row>    
+      </v-row>
     </v-container>
 
     <v-navigation-drawer
@@ -70,10 +79,11 @@
       width="25vw"
       temporary
       right
-      app       
+      app
     >
-    
+
     <SideBar :sidebar="selected" :drawer="drawer" @waitTags="onWaitTags"></SideBar>
+    <!--<SideBar :sidebar="selected_barcode" :drawer="drawer" @waitTags="onWaitTags"></SideBar>-->
 
     </v-navigation-drawer>
 
@@ -83,11 +93,15 @@
 
 <script>
 import axios from 'axios';
+import Common from '../../mixin/common.js'
+
 import SideBar from '../../components/RenderBarCode.vue';
 //import print from 'vue-print-nb';
 
 export default {
-  name: 'StockOutTagPrint',
+  name: 'stockOutTagPrint',
+
+  mixins: [Common],
 
   components: {
     SideBar,
@@ -95,25 +109,28 @@ export default {
 
   mounted() {
     console.log("stockOutTag, mounted()...");
- 
+
+    //document.addEventListener('click', this.onClick);
+
     this.root = document.documentElement;
-    
+
     // if back button is pressed
-    //window.onhashchange = function() {
-    window.onpopstate = function(event) {
-      console.log("hello, good bye...");
+    window.onpopstate = () => {
+    //window.onpopstate = function(event) {
+      console.log("press back button, good bye...");
+
       this.total_tags = 0;
-      //if ("totalTags" in localStorage) {
-      //  localStorage.setItem("totalTags", 0);
-      //  console.log("...localStorage...");
-      //} 
-      localStorage.setItem("totalTags", 0); 
+      localStorage.setItem("totalTags", 0);
+
+      const userData = JSON.parse(localStorage.getItem('loginedUser'));
+      userData.setting_items_per_page = this.pagination.itemsPerPage;
+      localStorage.setItem('loginedUser', JSON.stringify(userData));
     };
   },
 
   data: () => ({
     currentUser: {},
-    
+
     total_tags: 0,
 
     permDialog: false,
@@ -122,38 +139,50 @@ export default {
     errorShowForEmployer: false,
     errorShowForReagName: false,
 
-    dialog: false, 
-    
+    tosterOK: false,
+
+    dialog: false,
+
     drawer: false,
     root: null,
-        
+    reload: false,
+
     singleSelect: false,
+    //singleSelect: true,
     selected: [],
+    temp_selected: [],
+
+    pagination: {},
+
     //資料表頭
-    headers: [      
+    headers: [
       //{ text: 'ID', sortable: false, value: 'id', width: '10%', align: 'start'},
-      { text: '資材碼', sortable: true, value: 'stockInTag_reagID', width: '9%' },
-      { text: '品名', sortable: false, value: 'stockOutTag_reagName', width: '13%' },
-      { text: '效期', sortable: true, value: 'stockOutTag_reagPeriod', width: '9%' },
-      { text: '保存溫度', sortable: false, value: 'stockOutTag_reagTemp', width: '10%' },
-      { text: '入庫日期', sortable: true, value: 'stockOutTag_InDate', width: '10%' },
-      { text: '領用日期', sortable: false, value: 'stockOutTag_Date', width: '9%' },
-      { text: '領用人員', sortable: false, value: 'stockInTag_Employer', width: '10%' },
-      { text: '批號', sortable: false, value: 'stockOutTag_batch', width: '13%', align: 'center' },
-      { text: '領用單位', sortable: false, value: 'stockOutTag_unit', width: '10%', align: 'center' },
-      { text: '張數', sortable: false, value: 'stockInTag_cnt', width: '7%' },
-    ], 
-    
+      { text: '資材碼', sortable: true, value: 'stockOutTag_reagID', width: '7%' },
+      { text: '品名', sortable: false, value: 'stockOutTag_reagName', width: '24%' },
+      { text: '效期', sortable: true, value: 'stockOutTag_reagPeriod', width: '5%' },
+      { text: '保存溫度', sortable: false, value: 'stockOutTag_reagTemp', width: '7%' },
+      { text: '入庫日期', sortable: true, value: 'stockOutTag_In_Date', width: '9%' },
+      { text: '領用日期', sortable: true, value: 'stockOutTag_Out_Date', width: '9%' },
+      { text: '領用人員', sortable: true, value: 'stockOutTag_Employer', width: '9%' },
+     //{ text: '入庫人員', sortable: false, value: 'stockOutTag_Employer', width: '15%' },
+      { text: '批號', sortable: false, value: 'stockOutTag_batch', width: '13%' },
+      { text: '領用單位', sortable: false, value: 'stockOutTag_unit', width: '7%', align: 'center' },
+      { text: '張數', sortable: false, value: 'stockOutTag_cnt', width: '8%' },
+    ],
+
     in_drafTags: 0,
+
     desserts: [],
+    temp_desserts: [],
+
     editedIndex: -1,
 
     load_SingleTable_ok: false, //for get employer table data
-    load_2thTable_ok: false,    //for get reagent table data
+    //load_2thTable_ok: false,    //for get reagent table data
   }),
 
   computed: {
-    check_selected() {   
+    check_selected() {
       if (Array.isArray(this.selected) && this.selected.length) {
         // array exists and is not empty
         return true;
@@ -170,7 +199,10 @@ export default {
 
     load_SingleTable_ok(val) {
       if (val) {
-        this.getSingleTableData();
+        //this.desserts = Object.assign([], this.temp_desserts);
+        this.desserts =  JSON.parse(JSON.stringify(this.temp_desserts));
+
+        this.load_SingleTable_ok=false;
       }
     },
 
@@ -180,18 +212,46 @@ export default {
           if (this.drawer) {
             console.log("disable scrollbar...");
             this.root.style.setProperty('--bar','hidden');
+            this.reload=true;
           } else {
             console.log("enable scrollbar...");
             this.root.style.setProperty('--bar','scroll');
+            if (this.reload) {
+              let temp_arr=[];
+              temp_arr =  JSON.parse(JSON.stringify(this.temp_desserts));
+              this.desserts = Object.assign([], temp_arr);
+              temp_arr=[];
+              temp_arr =  JSON.parse(JSON.stringify(this.temp_selected));
+              this.selected = Object.assign([], temp_arr);
+              //window.location.reload();
+              this.reload=false;
+            }
           }
         });
       },
       immediate: true,
     },
+
+    selected(val) {
+      this.temp_selected =  JSON.parse(JSON.stringify(val));
+      /*
+        let obj= {
+        stockInTag_reagID: this.temp_selected.stockOutTag_reagID,
+        stockInTag_batch: this.temp_selected.stockOutTag_batch,
+        stockInTag_Date: this.temp_selected.stockOutTag_Out_Date,        //在列印條碼時, 此對應道出庫日期
+        stockInTag_Employer: this.temp_selected.stockOutTag_Employer,
+        stockInTag_reagTemp: this.temp_selected.stockOutTag_reagTemp,
+        stockInTag_alpha: this.temp_selected.stockOutTag_alpha,
+        stockInTag_cnt: this.temp_selected.stockOutTag_cnt,
+        stockInTag_reagName: this.temp_selected.stockOutTag_reagName,
+      }
+      this.selected_barcode.push
+      */
+    },
   },
 
   created () {
-    console.log("StockOutTag, created()...");
+    console.log("stockOutTag, created()...");
 
     //load 員工與權限資料
     this.currentUser = JSON.parse(localStorage.getItem("loginedUser"));
@@ -199,238 +259,251 @@ export default {
       this.permDialog=true;
     }
     this.stockOutTag_EmpID = this.currentUser.empID;
-    console.log("empID: ", this.currentUser.empID, this.stockOutTag_EmpID)
+    //console.log("empID: ", this.currentUser.empID, this.stockOutTag_EmpID)
+
+    this.pagination.itemsPerPage=this.currentUser.setting_items_per_page
 
     ////load 入庫草案資料
     //this.in_drafTags=0
     //if ("tags_draft" in localStorage) {
     //  let tempDesserts = JSON.parse(localStorage.getItem("tags_draft") || "[]");
     //  console.log("# of desserts: ", tempDesserts.length, tempDesserts);
-    //  this.in_drafTags=tempDesserts.length; 
+    //  this.in_drafTags=tempDesserts.length;
     //}
 
-    this.initialize()
+    this.load_SingleTable_ok=false;
+    this.initAxios();
+
+    this.liststockOutTagPrintData();
+    //this.initialize()
   },
 
   methods: {
     initialize() {
       this.load_SingleTable_ok=false;
+      this.liststockOutTagPrintData();
       /*
-      const path='/xxx';
-      axios.get(path)
-      .then((res) => {
-
-      this.load_SingleTable_ok=true;
-      })
-      .catch((error) => {
-
-      });
-      */
       this.desserts = [
-        
+
         {
           //id: 1,
-          stockInTag_reagID: '123456789',
+          stockOutTag_reagID: '123456789',
           stockOutTag_reagName: 'ABC',
           stockOutTag_reagPeriod: '111/10/31',
           stockOutTag_reagTemp: '2~8度C',
-          stockOutTag_InDate: '111/01/01',
           stockOutTag_Date: '111/06/01',
           stockOutTag_EmpID: 'N12345',
-          stockInTag_Employer: '陳健南',
+          stockOutTag_Employer: '陳健南',
           stockOutTag_batch: '1110012345B123400066',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 4,
+          stockOutTag_cnt: 4,
         },
         {
           //id: 2,
-          stockInTag_reagID: '234567891',
+          stockOutTag_reagID: '234567891',
           stockOutTag_reagName: 'ABCD',
           stockOutTag_reagPeriod: '111/12/31',
           stockOutTag_reagTemp: '2~8度C',
-          stockOutTag_InDate: '110/10/01',
           stockOutTag_Date: '111/06/01',
           stockOutTag_EmpID: 'N12345',
-          stockInTag_Employer: '陳健南',
+          stockOutTag_Employer: '陳健南',
           stockOutTag_batch: '1110012345C123400055',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 2,
+          stockOutTag_cnt: 2,
         },
         {
           //id: 3,
-          stockInTag_reagID: '234567892',
+          stockOutTag_reagID: '234567892',
           stockOutTag_reagName: 'A11',
           stockOutTag_reagPeriod: '111/12/31',
           stockOutTag_reagTemp: '2~8度C',
-          stockOutTag_InDate: '111/01/01',
           stockOutTag_Date: '111/06/01',
           stockOutTag_EmpID: 'N12345',
-          stockInTag_Employer: '陳健南',
+          stockOutTag_Employer: '陳健南',
           stockOutTag_batch: '1110012345B123400033',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
         {
           //id: 4,
-          stockInTag_reagID: '234567893',
+          stockOutTag_reagID: '234567893',
           stockOutTag_reagName: 'A12',
           stockOutTag_reagPeriod: '112/6/30',
           stockOutTag_reagTemp: '2~8度C',
-          stockOutTag_InDate: '111/01/01',
           stockOutTag_Date: '111/06/01',
           stockOutTag_EmpID: 'N12345',
-          stockInTag_Employer: '陳健南',
+          stockOutTag_Employer: '陳健南',
           stockOutTag_batch: '1110012345B123400033',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 1,
+          stockOutTag_cnt: 1,
         },
         {
           //id: 5,
-          stockInTag_reagID: '234567894',
+          stockOutTag_reagID: '234567894',
           stockOutTag_reagName: 'B2233',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '2~8度C',
-          stockOutTag_InDate: '111/03/01',
           stockOutTag_Date: '111/06/01',
           stockOutTag_EmpID: 'N12345',
-          stockInTag_Employer: '陳健南',
+          stockOutTag_Employer: '陳健南',
           stockOutTag_batch: '1110012345B123400022',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
         {
           //id: 6,
-          stockInTag_reagID: '234567897',
+          stockOutTag_reagID: '234567897',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '110/08/01',
           stockOutTag_Date: '111/03/10',
           stockOutTag_EmpID: 'T12345',
-          stockInTag_Employer: '林成興',
+          stockOutTag_Employer: '林成興',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 1,
+          stockOutTag_cnt: 1,
         },
         {
           //id: 7,
-          stockInTag_reagID: '234567898',
+          stockOutTag_reagID: '234567898',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '110/12/01',
           stockOutTag_Date: '111/03/10',
           stockOutTag_EmpID: 'T12345',
-          stockInTag_Employer: '林成興',
+          stockOutTag_Employer: '林成興',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
         {
           //id: 8,
-          stockInTag_reagID: '234567899',
+          stockOutTag_reagID: '234567899',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '110/11/01',
           stockOutTag_Date: '111/03/10',
           stockOutTag_EmpID: 'T12345',
-          stockInTag_Employer: '林成興',
+          stockOutTag_Employer: '林成興',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 5,
+          stockOutTag_cnt: 5,
         },
         {
           //id: 9,
-          stockInTag_reagID: '214567897',
+          stockOutTag_reagID: '214567897',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '110/05/01',
           stockOutTag_Date: '111/03/10',
           stockOutTag_EmpID: 'T12345',
-          stockInTag_Employer: '林成興',
+          stockOutTag_Employer: '林成興',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
         {
           //id: 10,
-          stockInTag_reagID: '214567898',
+          stockOutTag_reagID: '214567898',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '110/09/01',
           stockOutTag_Date: '111/03/10',
           stockOutTag_EmpID: 'T12345',
-          stockInTag_Employer: '林成興',
+          stockOutTag_Employer: '林成興',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 2,
+          stockOutTag_cnt: 2,
         },
         {
           //id: 11,
-          stockInTag_reagID: '214567899',
+          stockOutTag_reagID: '214567899',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '111/01/01',
           stockOutTag_Date: '111/06/25',
           stockOutTag_EmpID: 'T87654',
-          stockInTag_Employer: '吳仲偉',
+          stockOutTag_Employer: '吳仲偉',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
         {
           //id: 12,
-          stockInTag_reagID: '224567897',
+          stockOutTag_reagID: '224567897',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '111/01/01',
           stockOutTag_Date: '111/06/25',
           stockOutTag_EmpID: 'T87654',
-          stockInTag_Employer: '吳仲偉',
+          stockOutTag_Employer: '吳仲偉',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 20,
+          stockOutTag_cnt: 20,
         },
         {
           //id: 13,
-          stockInTag_reagID: '224567898',
+          stockOutTag_reagID: '224567898',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-           stockOutTag_InDate: '111/01/01',
-         stockOutTag_Date: '111/06/25',
+          stockOutTag_Date: '111/06/25',
           stockOutTag_EmpID: 'T87654',
-          stockInTag_Employer: '吳仲偉',
+          stockOutTag_Employer: '吳仲偉',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
         {
           //id: 14,
-          stockInTag_reagID: '224567899',
+          stockOutTag_reagID: '224567899',
           stockOutTag_reagName: 'B3344',
           stockOutTag_reagPeriod: '111/8/31',
           stockOutTag_reagTemp: '常溫',
-          stockOutTag_InDate: '111/03/01',
           stockOutTag_Date: '111/06/25',
           stockOutTag_EmpID: 'T87654',
-          stockInTag_Employer: '吳仲偉',
+          stockOutTag_Employer: '吳仲偉',
           stockOutTag_batch: '1110012345A123400001',
-          stockOutTag_unit: '盒',
-          stockInTag_cnt: 10,
+          stockOutTag_cnt: 10,
         },
-        
+
       ];
+      */
+    },
+
+    liststockOutTagPrintData() {
+      const path = '/liststockOutTagPrintData';
+      console.log("liststockOutTagPrintData, Axios get data...")
+      axios.get(path)
+      .then((res) => {
+        this.temp_desserts = res.data.outputs;
+        console.log("GET ok, total records:", res.data.outputs.length);
+        this.load_SingleTable_ok=true;
+      })
+      .catch((error) => {
+        console.error(error);
+        this.load_SingleTable_ok=false;
+      });
+    },
+
+    setRowStyle(item) {
+      return 'style-for-data-table';
     },
 
     getdata(item) {
       this.editedIndex = this.desserts.indexOf(item);
-      console.log(this.desserts[this.editedIndex].stockInTag_cnt);
+      console.log(this.desserts[this.editedIndex].stockOutTag_cnt);
+      this.temp_desserts[this.editedIndex].stockOutTag_cnt = this.desserts[this.editedIndex].stockOutTag_cnt;
+      this.updateStockInByCnt(this.desserts[this.editedIndex]);
+    },
+
+    updateStockInByCnt(object) {  //編輯 後端table資料
+      console.log("---click update_stockOutTagPrint_by_cnt data---", object);
+
+      const path='/updateStockOutByCnt';
+      let payload = Object.assign({}, object);
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update stockOutTagPrint data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+          this.editedItem = Object.assign({}, this.defaultItem);
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
     },
 
     onWaitTags(value) {
@@ -443,6 +516,34 @@ export default {
       localStorage.setItem("totalTags", this.total_tags);
 
       console.log("leave onWaitTags()...");
+
+      this.updateStockOutByPrintFlag();
+
+      this.desserts = this.desserts.filter(val => !this.selected.includes(val));
+    },
+
+    updateStockOutByPrintFlag() {
+      console.log("---click update_stockOut_by_printFlag---");
+
+      const path='/updateStockOutByPrintFlag';
+      let payload= {
+        blocks: this.selected,
+        count: this.selected.length,
+      };
+
+      axios.post(path, payload)
+      .then(res => {
+        console.log("update stockOutTagPrint data, status: ", res.data.status);
+        if (res.data.status) {
+          this.tosterOK = false;  //false: 關閉錯誤訊息畫面
+        } else {
+          this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.tosterOK = true;   //true: 顯示錯誤訊息畫面
+      });
     },
 
     printSection() {
@@ -453,28 +554,28 @@ export default {
         name: 'RenderBarCode',
         params: {
           selectDatas: this.selected,
-        }        
+        }
       });
-      */      
+      */
     },
 
     permCloseFun () {
       this.permDialog = false
       console.log("press permission Close Button...");
-      this.$router.push('/navbar'); 
-    },     
+      this.$router.push('/navbar');
+    },
   },
 }
 </script>
 
 <style>
 :root {
-  --bar: scroll;  
+  --bar: scroll;
 }
 
 html {
-  overflow-y: var(--bar) !important; 
-} 
+  overflow-y: var(--bar) !important;
+}
 </style>
 
 <style lang="scss" scoped>
@@ -488,39 +589,69 @@ div.v-toolbar__title {
 }
 
 ::v-deep .v-data-table-header {
-  background-color: #7DA79D;  
+  background-color: #7DA79D;
 }
 
 ::v-deep .v-data-table-header th {
-  font-size: 0.8em !important;
+  font-size: 1em !important;
+}
+
+//::v-deep .style-for-data-table td {
+::v-deep tr td {
+  padding-left: 8px !important;
+  padding-right: 0px !important;
+}
+
+//::v-deep .v-data-table > .v-data-table__wrapper > table > thead > tr > th {
+::v-deep tr > th {
+  padding-left: 8px !important;
+  padding-right: 0px !important;
+  text-align: start !important;
+}
+
+::v-deep .v-data-table-header th:nth-child(1) > div.v-data-table__checkbox.v-simple-checkbox {
+//::v-deep tr th:nth-child(1) {
+  width: 40px !important;
+  max-width: 40px !important;
+}
+::v-deep tr td:nth-child(1) {
+  width: 40px !important;
+  max-width: 40px !important;
 }
 
 ::v-deep .v-label {
   font-size: 1em
 }
 ::v-deep .v-label--active {
-  font-size: 1em;
+  font-size: 1.2em;
   font-weight: bold;
 }
 
 ::v-deep .v-data-table-header th:nth-child(1) i {
   color: blue;
+  //visibility:hidden;    //bug, 待解決
+  display:none;
 }
 
-::v-deep header { 
+::v-deep header {
   height: 48px !important;
   margin-top: 10px !important;
 }
 
-::v-deep .v-toolbar__content { 
+::v-deep .v-toolbar__content {
   height: 42px !important;
 }
 
-::v-deep .v-toolbar__title { 
+::v-deep .v-toolbar__title {
   height: 40px !important;
 }
 
 ::v-deep .v-data-table-header th:nth-last-child(1) span {
   color: #1f4788 !important;
+}
+
+::v-deep .v-data-table__wrapper td:nth-last-child(1) .v-text-field {
+  width: 40px !important;
+  max-width: 40px !important;
 }
 </style>

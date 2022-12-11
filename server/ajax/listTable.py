@@ -248,6 +248,37 @@ def list_stockin_grids():
     })
 
 
+# list grid table all data for 入庫
+@listTable.route("/listStockOutGrids", methods=['GET'])
+def list_stockout_grids():
+    print("listStockOutGrids....")
+    s = Session()
+    _results = []
+    _objects = s.query(Grid).all()
+
+    for grid in _objects:
+        # if (grid.isRemoved):
+        for reagent in grid._reagents_on_grid:
+            _obj = {
+                'grid_reagID': reagent.reag_id,
+                'grid_reagName': reagent.reag_name,
+                'grid_station': grid.station,
+                'grid_layout': grid.layout,
+                'grid_pos': grid.pos,
+                'id': grid.id,
+                'seg_id': grid.seg_id,
+                'range0': grid.range0,
+                'range1': grid.range1,
+            }
+            _results.append(_obj)
+
+    s.close()
+    return jsonify({
+        'status': 'success',
+        'outputs': _results
+    })
+
+
 # list grid table for Led
 @listTable.route("/listGridsForLed", methods=['GET'])
 def list_grids_for_led():
@@ -390,10 +421,11 @@ def list_stockin_items():
     print("listStockInItems....")
     s = Session()
     _results = []
+    return_value = True
     _objects = s.query(InTag).all()
 
     for intag in _objects:
-        if (intag.isRemoved and intag.isPrinted):  # 資料存在, 而且已經貼標籤
+        if (intag.isRemoved and intag.isPrinted and (not intag.isStockout)):  # 資料存在, 而且已經貼標籤,
             user = s.query(User).filter_by(id=intag.user_id).first()
             reagent = s.query(Reagent).filter_by(id=intag.reagent_id).first()
 
@@ -423,6 +455,118 @@ def list_stockin_items():
             _results.append(_obj)
 
     s.close()
+
+    print("listStockOutItems, input total(準備入庫數): ", len(_results))
+    temp_len = len(_results)
+    print("listStockOutItems, input total(準備入庫數): ", temp_len)
+    if (temp_len == 0):
+        return_value = False
+
+    return jsonify({
+        'status': return_value,
+        'outputs': _results
+    })
+
+
+# list inStock table all data(isPrint) for 入庫
+@listTable.route("/listStockOutItems", methods=['GET'])
+def list_stockout_items():
+    print("listStockOutItems....")
+    s = Session()
+    _results = []
+    return_value = True  # true: 資料正確
+    _objects = s.query(OutTag).all()
+
+    for outtag in _objects:
+        if (outtag.isRemoved and (outtag.isPrinted) and (not outtag.isStockout)):  # 資料存在, 而且已經貼標籤
+            user = s.query(User).filter_by(id=outtag.user_id).first()
+
+            in_tag = s.query(InTag).filter_by(
+                id=outtag.intag_id).first()
+            reagent = s.query(Reagent).filter_by(id=in_tag.reagent_id).first()
+
+            k1 = ''
+            if reagent.reag_temp == 0:  # 0:室溫、1:2~8度C、2:-20度C
+                k1 = '室溫'
+            if reagent.reag_temp == 1:
+                k1 = '2~8度C'
+            if reagent.reag_temp == 2:
+                k1 = '-20度C'
+
+            _obj = {
+                'id': outtag.id,
+                'stockOutTag_reagID': reagent.reag_id,
+                'stockOutTag_reagName': reagent.reag_name,
+                'stockOutTag_reagPeriod': reagent.reag_period,
+                'stockOutTag_reagTemp': k1,
+                'stockOutTag_Date': outtag.outtag_date,  # 出庫日期
+                'stockOutTag_EmpID': user.emp_id,
+                'stockOutTag_Employer': user.emp_name,
+                'stockOutTag_batch': in_tag.batch,
+                'stockOutTag_cnt': outtag.count,
+
+                'active': False,
+            }
+
+            _results.append(_obj)
+    s.close()
+
+    temp_len = len(_results)
+    print("listStockOutItems, output total(準備出庫數): ", temp_len)
+    if (temp_len == 0):
+        return_value = False
+
+    return jsonify({
+        'status': return_value,
+        'outputs': _results
+    })
+
+
+# list outStock_tagPrint table all data
+@listTable.route("/liststockOutTagPrintData", methods=['GET'])
+def list_stockout_tag_print_data():
+    print("liststockOutTagPrintData....")
+    s = Session()
+    _results = []
+    _objects = s.query(OutTag).all()
+    # grids = [u.__dict__ for u in _objects]
+    for outtag_print in _objects:
+        if (outtag_print.isRemoved and (not outtag_print.isPrinted) and (not outtag_print.isStockout)):  # 在庫, 還沒列印標籤, 還沒出庫
+            user = s.query(User).filter_by(id=outtag_print.user_id).first()
+
+            in_tag = s.query(InTag).filter_by(
+                id=outtag_print.intag_id).first()
+            reagent = s.query(Reagent).filter_by(id=in_tag.reagent_id).first()
+
+            k1 = ''
+            if reagent.reag_temp == 0:  # 0:室溫、1:2~8度C、2:-20度C
+                k1 = '室溫'
+            if reagent.reag_temp == 1:
+                k1 = '2~8度C'
+            if reagent.reag_temp == 2:
+                k1 = '-20度C'
+
+            _obj = {
+                'id': outtag_print.id,
+                'stockOutTag_reagID': reagent.reag_id,
+                'stockOutTag_reagName': reagent.reag_name,
+                'stockOutTag_reagPeriod': reagent.reag_period,
+                'stockOutTag_reagTemp': k1,
+                'stockOutTag_In_Date': in_tag.intag_date,  # 入庫日期
+                'stockOutTag_Out_Date': outtag_print.outtag_date,  # 出庫日期(領用日期)
+                'stockOutTag_Employer': user.emp_name,
+                'stockOutTag_batch': in_tag.batch,
+                'stockOutTag_unit': outtag_print.unit,
+                'stockOutTag_cnt': outtag_print.count,
+                'stockOutTag_alpha': outtag_print.stockOut_alpha,
+                # 'stockOutTag_cnt': outtag_print.count - outtag_print.stockOut_temp_count,
+                'stockOutTag_isPrinted': outtag_print.isPrinted,
+                'stockOutTag_isStockin': outtag_print.isStockout,
+            }
+
+            _results.append(_obj)
+
+    s.close()
     return jsonify({
         'status': 'success',
         'outputs': _results
@@ -438,7 +582,7 @@ def list_stockin_tag_print_data():
     _objects = s.query(InTag).all()
     # grids = [u.__dict__ for u in _objects]
     for intag_print in _objects:
-        if (intag_print.isRemoved and (not intag_print.isPrinted)):
+        if (intag_print.isRemoved and (not intag_print.isPrinted) and (not intag_print.isStockin)):
             user = s.query(User).filter_by(id=intag_print.user_id).first()
             reagent = s.query(Reagent).filter_by(
                 id=intag_print.reagent_id).first()
@@ -487,7 +631,7 @@ def list_stockin_tag_print_count():
     # grids = [u.__dict__ for u in _objects]
     for intag_print in _objects:
         if (intag_print.isRemoved and intag_print.isPrinted and (not intag_print.isStockin)):
-          temp_count = temp_count + 1
+            temp_count = temp_count + 1
 
     s.close()
     return jsonify({

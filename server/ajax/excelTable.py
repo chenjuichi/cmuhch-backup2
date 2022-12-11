@@ -55,9 +55,9 @@ def modify_InTags_grid(_id, _station, _layout, _pos, _reagID):
 # ------------------------------------------------------------------
 
 
-@excelTable.route("/exportToCSVForStockIn", methods=['POST'])
-def export_to_CSV_for_StockIn():
-    print("exportToCSVForStockIn....")
+@excelTable.route("/exportToCSVForStockInOut", methods=['POST'])
+def export_to_csv_for_stock_in_out():
+    print("exportToCSVForStockInOut....")
 
     request_data = request.get_json()
 
@@ -74,10 +74,16 @@ def export_to_CSV_for_StockIn():
 
     if return_value:
         for obj in _blocks:
-            obj['stockInTag_Employer'] = '入庫人員: ' + \
-                obj['stockInTag_Employer']
-            obj['stockInTag_Date'] = '入庫日期: ' + \
-                obj['stockInTag_Date']
+            if (obj['isIn']):
+                obj['stockInTag_Employer'] = '入庫人員: ' + \
+                    obj['stockInTag_Employer']
+                obj['stockInTag_Date'] = '入庫日期: ' + \
+                    obj['stockInTag_Date']
+            else:
+                obj['stockInTag_Employer'] = '領料人員: ' + \
+                    obj['stockInTag_Employer']
+                obj['stockInTag_Date'] = '領料日期: ' + \
+                    obj['stockInTag_Date']
 
         print("data: ", _blocks)
 
@@ -120,7 +126,7 @@ def export_to_CSV_for_StockIn():
         finally:
             csvfile.close()
 
-        os.system("barcode.bat")
+        os.system("e:\cmuhch\barcode.bat")
         #os.system("type print.csv")
 
         os.chdir(olddir)  # 進入server工作目錄

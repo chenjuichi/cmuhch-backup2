@@ -782,9 +782,6 @@ export default {
           this.currentLedStation=this.items[0].grid_station;
           this.currentLedLayout=this.items[0].grid_layout;
           this.currentLedPos=this.items[0].grid_pos;
-
-
-          //return copyItems;
         }
         //if (index != -1) {
         //  console.log("result 2...", index);
@@ -836,16 +833,16 @@ export default {
       this.isOK=true;
       let temp_sw=this.items[this.model].grid_station;
       switch (temp_sw) {
-        default:
-          this.home_url=this.home_url_R;
-          return;
+        //default:
+        //  this.home_url=this.home_url_R;
+        //  return;
         case 1:
           this.home_url=this.home_url_R;
           return;
         case 2:
           this.home_url=this.home_url_Y;
           return;
-        case 2:
+        case 3:
           this.home_url=this.home_url_G;
           return;
       }

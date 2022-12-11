@@ -1,7 +1,7 @@
 import time
 import datetime
 import pytz
-from tzlocal import get_localzone  # $ pip install tzlocal
+# from tzlocal import get_localzone  # $ pip install tzlocal
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
@@ -577,7 +577,7 @@ def update_stockIn():
 
 
 @updateTable.route("/updateStockInByPrintFlag", methods=['POST'])
-def update_StockIn_by_printFlag():
+def update_stockin_by_printFlag():
     print("updateStockInByPrintFlag....")
 
     request_data = request.get_json()
@@ -621,8 +621,48 @@ def update_StockIn_by_printFlag():
     })
 
 
+@updateTable.route("/updateStockOutByPrintFlag", methods=['POST'])
+def update_stockout_by_printFlag():
+    print("updateStockOutByPrintFlag....")
+
+    request_data = request.get_json()
+
+    _blocks = request_data['blocks']
+    _count = request_data['count']
+    temp = len(_blocks)
+    data_check = (True, False)[_count == 0 or temp == 0 or _count != temp]
+
+    print("data: ", _blocks)
+
+    return_message = ''
+    return_value = True  # true: 資料正確
+    if not data_check:  # false: 資料不完全
+        return_value = False  # false: 資料不完全
+        return_message = '資料錯誤!'
+    # now = datetime.datetime.utcnow()
+    ts = time.time()
+    now = datetime.datetime.fromtimestamp(ts)
+
+    # print("now: ", now)
+    if return_value:
+        s = Session()
+        for obj in _blocks:
+            s.query(OutTag).filter(OutTag.id == obj['id']).update(
+                {'isPrinted': True,  # true, 條碼已經列印完成
+                 'updated_at': now,  # 資料修改的時間
+                 })
+
+        s.commit()
+        s.close()
+
+    return jsonify({
+        'status': return_value,
+        'message': return_message,
+    })
+
+
 @updateTable.route("/updateStockInByCnt", methods=['POST'])
-def update_StockIn_by_cnt():
+def update_stockin_by_cnt():
     print("updateStockInByCnt....")
 
     request_data = request.get_json()
@@ -642,6 +682,37 @@ def update_StockIn_by_cnt():
         s = Session()
         intag = s.query(InTag).filter_by(id=intag_id).first()
         intag.count = cnt
+        s.commit()
+
+        s.close()
+
+    return jsonify({
+        'status': return_value,
+        'message': return_message,
+    })
+
+
+@updateTable.route("/updateStockOutByCnt", methods=['POST'])
+def update_stockout_by_cnt():
+    print("updateStockOutByCnt....")
+
+    request_data = request.get_json()
+
+    cnt = (request_data['stockOutTag_cnt'] or '')
+    outtag_id = (request_data['id'] or '')
+
+    print("data: ", cnt, outtag_id)
+
+    return_message = ''
+    return_value = True  # true: 資料正確, true
+    if outtag_id == "" or cnt == "":
+        return_value = False  # false: 資料不完全
+        return_message = '數量資料錯誤!'
+
+    if return_value:
+        s = Session()
+        outtag = s.query(OutTag).filter_by(id=outtag_id).first()
+        outtag.count = cnt
         s.commit()
 
         s.close()

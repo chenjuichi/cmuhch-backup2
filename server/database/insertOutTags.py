@@ -9,19 +9,25 @@ from werkzeug.security import generate_password_hash
 
 inTag_id = [1, 2, 3, 4, 5, 6, 7]
 userID = [2, 3, 4, 5, 6, 7, 7]
+
+reagent = [14, 12, 13,   9, 11, 5, 6]
+
 count = [1, 1, 1, 1, 2, 5, 2]
 unit = ['盒', '盒', '盒', '盒', '盒', '袋', '盒']
-outtag_date = ['111/09/12', '111/09/12', '111/08/31', '111/08/31', '111/08/24',
-               '111/08/23', '111/08/01', ]
+outtag_date = ['111/10/31', '111/10/31', '111/10/31', '111/11/10', '111/11/10',
+               '111/12/05', '111/12/05', ]
 
-printMark = [False, False, False, False, True, True, True]
+alpha = ['a', 'a', 'a', 'b', 'b', 'c', 'c', ]
+
+printMark = [True, True, True, True, True, True, True]
 stockoutMark = [False, False, False, False, True, True, True]
 
 s = Session()
 _results = []
 
 for i in range(7):
-    _obj = OutTag(intag_id=inTag_id[i], user_id=userID[i], count=count[i], unit=unit[i],
+    _obj = OutTag(intag_id=inTag_id[i], user_id=userID[i], count=count[i], stockOut_alpha=alpha[i],
+                  unit=unit[i],
                   outtag_date=outtag_date[i], isPrinted=printMark[i], isStockout=stockoutMark[i])
     _results.append(_obj)
 

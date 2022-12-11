@@ -82,16 +82,28 @@ export default {
     ////},
 
     formField() {
+      //let test_obj = { stockInTag_cnt: undefined };
+
       this.regFields=[];
       let temp_len=this.fields.length;
       console.log("temp_len: ", temp_len);
       for (let i=0; i < temp_len; i++) {
         //console.log("temp_len, type: ", typeof(this.fields[temp_len-1][i]), this.fields[temp_len-1][i]);
         if (typeof(this.fields[temp_len-1][i]) !="undefined") {
-          let temp_tags=this.fields[temp_len-1][i].stockInTag_cnt;
-          for (let j=0; j < temp_tags; j++) {
-            this.fields[temp_len-1][i]['stockInTag_cnt']=1;
-            this.regFields.push(this.fields[temp_len-1][i]);
+
+          console.log("RenderBarCode, bar obj: ", 'stockInTag_cnt' in this.fields[temp_len-1][i]);
+          if ('stockInTag_cnt' in this.fields[temp_len-1][i]) {   //入庫
+            let temp_tags=this.fields[temp_len-1][i].stockInTag_cnt;
+            for (let j=0; j < temp_tags; j++) {
+              this.fields[temp_len-1][i]['stockInTag_cnt']=1;
+              this.regFields.push(this.fields[temp_len-1][i]);
+            }
+          } else {   //出庫
+            let temp_tags=this.fields[temp_len-1][i].stockOutTag_cnt;
+            for (let j=0; j < temp_tags; j++) {
+              this.fields[temp_len-1][i]['stockOutTag_cnt']=1;
+              this.regFields.push(this.fields[temp_len-1][i]);
+            }
           }
         }
       }

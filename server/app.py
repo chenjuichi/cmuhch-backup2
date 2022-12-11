@@ -28,13 +28,13 @@ app = Flask(__name__)  # 初始化Flask物件
 #api = Api(app)
 
 # --------------------------
-
+'''
 hostName = socket.gethostname()
 local_ip = socket.getaddrinfo(hostName, None)
 host_ip_for_lan = local_ip[3][4][0]  # for 有線網卡
 host_ip_for_wifi = local_ip[1][4][0]  # for 無線網卡
 print("system Lan ip:" + host_ip_for_lan, ", and wifi ip:" + host_ip_for_wifi)
-
+'''
 # --------------------------
 
 host_ip = '192.168.0.14'    # for home #//////2/2-

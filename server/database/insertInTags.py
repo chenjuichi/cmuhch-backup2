@@ -17,10 +17,12 @@ batch = ['1110012345A123400001', '1110012345A123400002', '1110012345A123400003',
          '1110012345A123400050', '1110012345A123400050',
          '1110012345A123406621', '1110012345A123406622', '1110012345A123406623',
          ]
-intag_date = ['111/06/01', '111/05/01', '111/05/01', '111/04/01', '111/04/01',
-              '111/03/01', '111/06/01', '111/06/01', '111/07/01', '111/08/01', '111/08/01',
-              '111/10/20', '111/10/20', '110/11/10',
+intag_date = ['111/05/01', '111/05/01', '111/05/01', '111/04/01', '111/04/01',
+              '111/04/01', '111/06/01', '111/06/01', '111/08/01', '111/08/01', '111/08/01',
+              '111/10/20', '111/10/20', '110/10/20',
               ]
+alpha = ['B', 'B', 'B', 'A', 'A', 'A', 'C', 'C', 'D', 'D', 'D', 'E', 'E', 'F']
+
 printMark = [False, False, False, False, False,
              True, True, True, True, True, True,
              True, True, True,
@@ -35,7 +37,7 @@ _results = []
 
 for i in range(14):
     _obj = InTag(user_id=user[i], reagent_id=reagent[i],
-                 grid_id=grid[i], count=count[i],
+                 grid_id=grid[i], count=count[i], stockIn_alpha=alpha[i],
                  stockOut_temp_count=temp_cnt[i], batch=batch[i], intag_date=intag_date[i], isPrinted=printMark[i], isStockin=stockinMark[i])
     _results.append(_obj)
 

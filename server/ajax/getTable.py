@@ -61,36 +61,44 @@ def login():
 
     s = Session()
     user = s.query(User).filter_by(emp_id=userID).first()
-    print("login user: ", user)
 
-    xx = not user.isRemoved  # isRemoved=False, 表示該使用者已被註記移除
-
-    if not user or not check_password_hash(user.password, password) or xx:
-        return_value = False  # if the user doesn't exist or password is wrong, reload the page
+    return_value = True  # true: 資料正確
+    if not user:
+        return_value = False
         _user_object = {}
     else:
-        # if the above check passes, then we know the user has the right credentials
-        return_value = True
+        print("login user: ", user)
 
-        dep_item = s.query(Department).filter_by(id=user.dep_id).first()
-        perm_item = s.query(Permission).filter_by(
-            id=user.perm_id).first()
-        setting_item = s.query(Setting).filter_by(id=user.setting_id).first()
+        xx = not user.isRemoved  # isRemoved=False, 表示該使用者已被註記移除
 
-        s.query(User).filter(User.emp_id == userID).update({'isOnline': True})
-        s.commit()
+        if not user or not check_password_hash(user.password, password) or xx:
+            return_value = False  # if the user doesn't exist or password is wrong, reload the page
+            _user_object = {}
+        else:
+            # if the above check passes, then we know the user has the right credentials
+            # return_value = True
 
-        _user_object = {
-            'empID': user.emp_id,
-            'name': user.emp_name,
-            'dep': dep_item.dep_name,
-            'dep_id': dep_item.id,
-            'perm_name': perm_item.auth_name,
-            'perm': perm_item.auth_code,
-            'password': password,
-            'setting_items_per_page': setting_item.items_per_page,
-            'setting_message': setting_item.message,
-        }
+            dep_item = s.query(Department).filter_by(id=user.dep_id).first()
+            perm_item = s.query(Permission).filter_by(
+                id=user.perm_id).first()
+            setting_item = s.query(Setting).filter_by(
+                id=user.setting_id).first()
+
+            s.query(User).filter(User.emp_id ==
+                                 userID).update({'isOnline': True})
+            s.commit()
+
+            _user_object = {
+                'empID': user.emp_id,
+                'name': user.emp_name,
+                'dep': dep_item.dep_name,
+                'dep_id': dep_item.id,
+                'perm_name': perm_item.auth_name,
+                'perm': perm_item.auth_code,
+                'password': password,
+                'setting_items_per_page': setting_item.items_per_page,
+                'setting_message': setting_item.message,
+            }
 
     s.close()
 

@@ -939,8 +939,23 @@ export default {
     //* },
 
     setRowBackground(item) {
-      //return 'style-1';
-      //return item.protein > 4.2 ? 'style-1' : ''
+      //將效期的國曆日期轉為西元年,並轉為Date Object
+      let myVarParts_end = item.stockInTag_reagPeriod.split('/');
+      let arrOfNum_end = myVarParts_end.map(str => {
+        return Number(str);
+      });
+      let cEnd = new Date(arrOfNum_end[0]+1911, arrOfNum_end[1]-1, arrOfNum_end[2]); //月為index 0~11
+      let cEnd_add=cEnd.addDays(30);
+      //當天+效期天數(西元年),並轉為Date Object
+      let cToday=new Date();
+      let cToday_add=cToday.addDays(30);
+
+      let date1 = cEnd.getTime();
+      let date2 = cToday_add.getTime();
+      let cmp_date =date2 > date1 ? true:false
+      console.log("天數比較: ", "效期=", cEnd, "今天+30=", cToday_add, "大小", cmp_date);
+
+      return cmp_date ? 'style-1' : ''
     },
 
     //getGrid(item) {
@@ -1412,10 +1427,13 @@ div.v-toolbar__title {
     transform: rotateX(90deg) translateZ(20px);
 }
 
-.style-1 {
-  background-color: rgb(215,215,44)
+::v-deep .style-1 {
+  //background-color: rgb(255,192,203);
+  background:#FFC0CB;
 }
-.style-2 {
-  background-color: rgb(114,114,67)
+
+::v-deep .style-2 {
+  //background-color: rgb(255,255,255);
+  background:#FFffff;
 }
 </style>

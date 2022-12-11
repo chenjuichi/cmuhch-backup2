@@ -25,7 +25,8 @@
       <v-layout align-center justify-center>
         <v-flex xs12>
           <v-card id="printMe">
-          <div v-for="(field, index) in barcode_data" :key="index" class="container_barcode">
+          <!--<div v-for="(field, index) in barcode_data" :key="index" class="container_barcode">-->
+          <div v-for="(field, index) in temp_barcode_data" :key="index" class="container_barcode">
             <!--<div>中國醫藥大學新竹附設醫院</div>-->
             <ul>
               <li>{{field.stockInTag_reagName }}</li>
@@ -37,14 +38,14 @@
             </div>
             <div class="word">
               <span style="font-size: 12px; margin-left:20px; position: relative; top: -10px;">
-                入庫日期: {{ field.stockInTag_Date }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                {{ asrsDate }}: {{ field.stockInTag_Date }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               </span>
               <span style="font-size: 32px; position: relative; top: 15px;">
                 {{ field.stockInTag_alpha }}
               </span>
             </div>
             <div style="font-size: 12px; font-weight:600; display: flex; justify-content: flex-start; margin-left:20px; position: relative; top: -15px;">
-              入庫人員: {{ field.stockInTag_Employer }}
+              {{ asrsEmp }}: {{ field.stockInTag_Employer }}
             </div>
             <div style="font-size: 12px; display: flex; justify-content: flex-start; margin-left:20px; position: relative; top: -15px;">
               保存溫度: {{ field.stockInTag_Employer }}
@@ -94,11 +95,42 @@ export default {
   },
 
   computed: {
+    asrsEmp() {
+      return this.asrs ? '入庫人員' : '領料人員';
+    },
 
+    asrsDate() {
+      return this.asrs ? '入庫' : '領料日期';
+    },
   },
 
   watch: {
-
+    barcode_data (val) {
+      if ('stockInTag_cnt' in this.barcode_data[0]) {   //入庫
+        this.temp_barcode_data =  JSON.parse(JSON.stringify(this.barcode_data));
+        this.asrs = true;
+      } else {     //出庫
+        let temp_len = this.barcode_data.length;
+        this.temp_barcode_data= [];
+        for (let i=0; i < temp_len; i++) {
+          let obj= {
+            stockInTag_reagID: this.barcode_data[i].stockOutTag_reagID,
+            stockInTag_batch: this.barcode_data[i].stockOutTag_batch,
+            stockInTag_Date: this.barcode_data[i].stockOutTag_Out_Date,        //在列印條碼時, 此對應道出庫日期
+            stockInTag_Employer: this.barcode_data[i].stockOutTag_Employer,
+            stockInTag_reagTemp: this.barcode_data[i].stockOutTag_reagTemp,
+            stockInTag_alpha: this.barcode_data[i].stockOutTag_alpha,
+            stockInTag_cnt: this.barcode_data[i].stockOutTag_cnt,
+            stockInTag_reagName: this.barcode_data[i].stockOutTag_reagName,
+          }
+          this.temp_barcode_data.push(obj);
+        }
+        this.asrs = false;
+      }
+      this.temp_barcode_data = this.temp_barcode_data.map(v => ({...v, isIn: this.asrs})) //新增object內的key(isIn), true: 入庫資料
+      console.log("----bar1, ", this.barcode_data);
+      console.log("----bar2, ", this.temp_barcode_data);
+    }
   },
 
   data() {
@@ -110,6 +142,8 @@ export default {
       myTimer: '',            //在component內設定timer, timer的handle
       myTimerId: '',          //timer的id
       svg_change: true,
+      temp_barcode_data: [],
+      asrs: true,   //true:入庫
     };
   },
 
@@ -124,14 +158,14 @@ export default {
 
   methods: {
     printBarcode() {
-      console.log("click, printBarcode()...", this.barcode_data);
+      console.log("click, printBarcode()...", temp_barcode_data);
       this.exportToCSV();
       this.$emit('pressPrint', true);
     },
 
     exportToCSV() {
      //let object_Desserts = Object.assign([], this.barcode_data);
-      let barcode_Desserts = Object.assign([], this.barcode_data);
+      let barcode_Desserts = Object.assign([], temp_barcode_data);
 
       let object_Desserts = barcode_Desserts.map(({
         stockInTag_reagID,
@@ -156,7 +190,7 @@ export default {
       }))
       console.log("StockInTagPrint, exportToCSV, Axios post data..., ", barcode_Desserts, object_Desserts);
 
-      const path = '/exportToCSVForStockIn';
+      const path = '/exportToCSVForStockInOut';
       var payload= {
         blocks: object_Desserts,
         count: object_Desserts.length,

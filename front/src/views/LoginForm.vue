@@ -160,6 +160,18 @@
         <button @click="userLogin">登入</button>
       </div>
     </div>
+  <!--
+  <v-row justify="space-around">
+    <v-color-picker
+      class="ma-2"
+      dot-size="20"
+      canvas-height="100"
+      hide-inputs
+      v-model="myPicker"
+      hide-mode-switch
+    ></v-color-picker>
+  </v-row>
+  -->
   </v-app>
 </template>
 
@@ -185,6 +197,8 @@ export default {
     return {
       home_url: header,
       signUp: false,    //初始畫面為登入畫面
+
+      myPicker: {},
 
       tosterTitlt: 'Hello',
       tosterType: 'error',
@@ -291,6 +305,15 @@ export default {
     loginOK(val) {
       //console.log("loginOK is: ", val);
       this.signin();
+    },
+
+    myPicker(value) {
+      // temporary fix while there is no way to disable the alpha channel in the colorpicker component: https://github.com/vuetifyjs/vuetify/issues/9590
+      console.log("b, color: ", value);
+      if (value.toString().match(/#[a-zA-Z0-9]{8}/)) {
+          this.myPicker = value.substr(0, 7);
+      }
+      console.log("a, color: ", value);
     },
 
     load_SingleTable_ok(val) {

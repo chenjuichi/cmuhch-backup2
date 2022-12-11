@@ -200,6 +200,7 @@ class Reagent(BASE):
     # true: table有資料,  false:table已經刪除該資料
     isRemoved = Column(Boolean, default=True)
     _instocks = relationship('InTag', backref="reagent")  # 一對多中的 "一"
+    # _outstocks = relationship('OutTag', backref="reagent")  # 一對多中的 "一"
 
     create_at = Column(DateTime, server_default=func.now())
 
@@ -365,7 +366,7 @@ class InTag(BASE):
 
     _outstocks = relationship('OutTag', backref="intag")  # 一對多中的 "一"
 
-    isRemoved = Column(Boolean, default=True)   # false:已經刪除資料
+    isRemoved = Column(Boolean, default=True)   # true: 在庫, false:已經刪除資料
     isPrinted = Column(Boolean, default=False)  # false: 標籤尚未列印, true:已列印
     isStockin = Column(Boolean, default=False)  # false:尚未入庫, true:已入庫
 
@@ -439,11 +440,10 @@ class OutTag(BASE):
     unit = Column(String(10), nullable=False)  # 單位
     outtag_date = Column(String(10), nullable=False)    # 領用日期
 
-    # true:已領料, 準備列印標籤; false:已領料, 且刪單
-    isRemoved = Column(Boolean, default=True)
+    isRemoved = Column(Boolean, default=True)     # true: 在庫, false:已領料, 且刪單
     isPrinted = Column(Boolean, default=False)    # false: 標籤尚未列印, true:已列印
     # false:尚未出庫(在庫), true:已出庫(領料)
-    isStockout = Column(Boolean, default=False)
+    isStockout = Column(Boolean, default=False)   # false: 還沒出庫
 
     stockOut_alpha = Column(String(4))  # 出庫標籤上的批次文字, 2022/11/15討論增加
 
